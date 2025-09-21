@@ -3,6 +3,7 @@ package internal
 var ENV struct {
 	Server   `mapstructure:"server"`
 	Database `mapstructure:"database"`
+	Redis    `mapstructure:"redis"`
 }
 
 type Server struct {
@@ -16,4 +17,10 @@ type Database struct {
 	Password string `mapstructure:"password" defaultValue:"root"`
 	Name     string `mapstructure:"name" defaultValue:"postgres"`
 	Driver   string `mapstructure:"driver" defaultValue:"postgres"`
+}
+
+type Redis struct {
+	Host     string `mapstructure:"host" defaultValue:"localhost"`
+	Port     int    `mapstructure:"port" defaultValue:"9001"`
+	Password string `mapstructure:"password" defaultValue:""`
 }

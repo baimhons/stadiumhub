@@ -8,10 +8,7 @@ import (
 
 type Zone struct {
 	utils.BaseEntity
-	TeamID      uuid.UUID `gorm:"not null"`
-	Team        team.Team `gorm:"foreignKey:TeamID"`
-	Name        string    `gorm:"not null"`
-	Capacity    int       `gorm:"not null"`
-	Price       float32   `gorm:"not null"`
-	Discription string    `gorm:"not null"`
+	TeamID uuid.UUID `gorm:"not null"`
+	Team   team.Team `gorm:"foreignKey:TeamID"`
+	Name   string    `gorm:"not null"`
 }
