@@ -1,8 +1,8 @@
 package seat
 
 import (
-	"github.com/baimhons/stadiumhub.git/internal/utils"
-	"github.com/baimhons/stadiumhub.git/internal/zone"
+	"github.com/baimhons/stadiumhub/internal/utils"
+	"github.com/baimhons/stadiumhub/internal/zone"
 	"github.com/google/uuid"
 )
 

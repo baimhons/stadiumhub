@@ -1,9 +1,14 @@
 package initial
 
 import (
+	"fmt"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
-	"github.com/baimhons/stadiumhub.git/internal"
+	"github.com/baimhons/stadiumhub/internal"
+	"github.com/gin-gonic/gin"
 	"github.com/wisaitas/share-pkg/utils"
 )
 
@@ -13,25 +18,46 @@ func init() {
 	}
 }
 
-// func InitializeApp() *App {
-// 	clientConfig := newClientConfig()
+type App struct {
+	App          *gin.Engine
+	ClientConfig *clientConfig
+}
 
-// 	ginEngine := gin.Default()
+func InitializeApp() *App {
+	clientConfig := newClientConfig()
 
-// 	setupMiddleware(ginEngine)
+	ginEngine := gin.Default()
 
-// 	sharePkg := newSharePkg(clientConfig)
+	SetupMiddleware(ginEngine)
 
-// 	repository := newRepository(clientConfig)
-// 	service := newService(repository, sharePkg)
-// 	handler := newHandler(service)
-// 	validate := newValidate(sharePkg)
-// 	middleware := newMiddleware(sharePkg)
+	repository := NewRepository(clientConfig)
+	service := NewService(repository, clientConfig.Redis)
+	handler := NewHandler(service)
+	validate := NewValidate()
 
-// 	newRoute(app, handler, validate, middleware)
+	NewRoute(
+		ginEngine,
+		*handler,
+		*validate,
+	)
 
-// 	return &App{
-// 		App:          app,
-// 		ClientConfig: clientConfig,
-// 	}
-// }
+	return &App{
+		App:          ginEngine,
+		ClientConfig: clientConfig,
+	}
+}
+
+func (a *App) Run() chan os.Signal {
+	go func() {
+		if err := a.App.Run(fmt.Sprintf(":%d", internal.ENV.Server.Port)); err != nil {
+			log.Fatalf("error starting server: %v\n", utils.Error(err))
+		}
+	}()
+
+	gracefulShutdown := make(chan os.Signal, 1)
+	signal.Notify(gracefulShutdown, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+
+	<-gracefulShutdown
+
+	return gracefulShutdown
+}

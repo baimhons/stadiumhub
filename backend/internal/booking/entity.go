@@ -1,10 +1,10 @@
 package booking
 
 import (
-	"github.com/baimhons/stadiumhub.git/internal/match"
-	"github.com/baimhons/stadiumhub.git/internal/seat"
-	"github.com/baimhons/stadiumhub.git/internal/user"
-	"github.com/baimhons/stadiumhub.git/internal/utils"
+	"github.com/baimhons/stadiumhub/internal/match"
+	"github.com/baimhons/stadiumhub/internal/seat"
+	"github.com/baimhons/stadiumhub/internal/user"
+	"github.com/baimhons/stadiumhub/internal/utils"
 	"github.com/google/uuid"
 )
 

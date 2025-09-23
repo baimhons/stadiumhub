@@ -1,9 +1,9 @@
 package matchteam
 
 import (
-	"github.com/baimhons/stadiumhub.git/internal/match"
-	"github.com/baimhons/stadiumhub.git/internal/team"
-	"github.com/baimhons/stadiumhub.git/internal/utils"
+	"github.com/baimhons/stadiumhub/internal/match"
+	"github.com/baimhons/stadiumhub/internal/team"
+	"github.com/baimhons/stadiumhub/internal/utils"
 	"github.com/google/uuid"
 )
 

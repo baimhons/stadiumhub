@@ -1,6 +1,6 @@
 package team
 
-import "github.com/baimhons/stadiumhub.git/internal/utils"
+import "github.com/baimhons/stadiumhub/internal/utils"
 
 type Team struct {
 	utils.BaseEntity
