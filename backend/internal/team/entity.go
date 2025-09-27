@@ -1,14 +1,16 @@
 package team
 
-import "github.com/baimhons/stadiumhub/internal/utils"
+import "time"
 
 type Team struct {
-	utils.BaseEntity
-	Name           string  `gorm:"not null,unique"`
-	ShortName      string  `gorm:"not null,unique"`
-	TLA            string  `gorm:"not null"`
-	Address        string  `gorm:"not null"`
-	Venue          string  `gorm:"not null,unique"`
-	ViewerCapacity int     `gorm:"not null"`
-	Price          float32 `gorm:"not null"`
+	ID             int       `gorm:"primaryKey"`
+	Name           string    `gorm:"not null,unique"`
+	ShortName      string    `gorm:"not null,unique"`
+	TLA            string    `gorm:"not null"`
+	Address        string    `gorm:"not null"`
+	Venue          string    `gorm:"not null,unique"`
+	ViewerCapacity int       `gorm:"not null"`
+	Price          float32   `gorm:"not null"`
+	CreatedAt      time.Time `gorm:"not null default:current_timestamp"`
+	UpdatedAt      time.Time `gorm:"not null default:current_timestamp"`
 }

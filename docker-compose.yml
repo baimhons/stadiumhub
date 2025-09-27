@@ -1,0 +1,46 @@
+services:
+  mysql:
+    build:
+      context: ./deployment/docker-images/mysql
+      dockerfile: mysql.Dockerfile
+    container_name: stadiumhub-mysql
+    restart: always
+    env_file:
+      - ./deployment/env/api.env
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  api:
+    build:
+      context: .
+      dockerfile: deployment/docker-images/api/api.Dockerfile
+    container_name: stadiumhub-api
+    restart: always
+    depends_on:
+      - mysql
+      - redis
+    env_file:
+      - ./deployment/env/api.env
+    ports:
+      - "${PORT}:8080"
+
+
+  redis:
+    image: redis:7
+    container_name: stadiumhub-redis
+    restart: always
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  mysql_data:
+  redis_data:

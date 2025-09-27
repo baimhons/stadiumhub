@@ -16,7 +16,6 @@ import (
 type Seat struct {
 	utils.BaseEntity
 	SeatNo string    `gorm:"not null,unique"`
-	Status string    `gorm:"type:varchar(20);not null"`
-	ZoneID uuid.UUID `gorm:"not null"`
+	ZoneID uuid.UUID `gorm:"type:char(36);not null"`
 	Zone   zone.Zone `gorm:"foreignKey:ZoneID"`
 }
