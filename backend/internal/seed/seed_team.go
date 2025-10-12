@@ -44,12 +44,15 @@ func SeedTeam(db *gorm.DB) {
 	}
 
 	var result TeamResponse
-	err = json.Unmarshal(body, &result)
-	if err != nil {
+	if err := json.Unmarshal(body, &result); err != nil {
 		panic(err)
 	}
 
 	teamRepo := team.NewTeamRepository(db)
+	if teamRepo == nil {
+		panic("team repository is nil")
+	}
+
 	for _, apiTeam := range result.Teams {
 		entity := team.Team{
 			ID:             apiTeam.ID,
@@ -58,15 +61,16 @@ func SeedTeam(db *gorm.DB) {
 			TLA:            apiTeam.TLA,
 			Address:        apiTeam.Address,
 			Venue:          apiTeam.Venue,
-			ViewerCapacity: 0,   // ค่า default
-			Price:          0.0, // ค่า default
+			ViewerCapacity: 0,
+			Price:          0.0,
 		}
 
-		err := teamRepo.Create(&entity)
-		if err != nil {
-			fmt.Printf("❌ error saving team %s: %v\n", entity.Name, err)
-		} else {
-			fmt.Printf("✅ saved team: %s\n", entity.Name)
+		if err := teamRepo.Create(&entity); err != nil {
+			fmt.Printf("error saving team %s: %v\n", entity.Name, err)
 		}
+	}
+	service := team.NewTeamService(teamRepo)
+	if err := service.InsertTeamCapacityAndPrice(); err != nil {
+		fmt.Printf("error inserting team capacity: %v\n", err)
 	}
 }

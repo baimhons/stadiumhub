@@ -1,0 +1,122 @@
+[
+    {
+        "team": "Arsenal",
+        "stadium": "Emirates Stadium",
+        "capacity": 60704,
+        "price": 3800
+    },
+    {
+        "team": "Aston Villa",
+        "stadium": "Villa Park",
+        "capacity": 42788,
+        "price": 3000
+    },
+    {
+        "team": "Bournemouth",
+        "stadium": "Vitality Stadium",
+        "capacity": 11464,
+        "price": 2500
+    },
+    {
+        "team": "Brentford",
+        "stadium": "Brentford Community Stadium",
+        "capacity": 17250,
+        "price": 2500
+    },
+    {
+        "team": "Brighton Hove",
+        "stadium": "Amex Stadium",
+        "capacity": 31876,
+        "price": 3000
+    },
+    {
+        "team": "Burnley",
+        "stadium": "Turf Moor",
+        "capacity": 21944,
+        "price": 2500
+    },
+    {
+        "team": "Chelsea",
+        "stadium": "Stamford Bridge",
+        "capacity": 41837,
+        "price": 3800
+    },
+    {
+        "team": "Crystal Palace",
+        "stadium": "Selhurst Park",
+        "capacity": 26255,
+        "price": 2500
+    },
+    {
+        "team": "Everton",
+        "stadium": "Hill Dickinson Stadium",
+        "capacity": 52888,
+        "price": 3000
+    },
+    {
+        "team": "Fulham",
+        "stadium": "Craven Cottage",
+        "capacity": 25700,
+        "price": 2500
+    },
+    {
+        "team": "Leeds United",
+        "stadium": "Elland Road",
+        "capacity": 37890,
+        "price": 3000
+    },
+    {
+        "team": "Liverpool",
+        "stadium": "Anfield",
+        "capacity": 61074,
+        "price": 3800
+    },
+    {
+        "team": "Man City",
+        "stadium": "Etihad Stadium",
+        "capacity": 55097,
+        "price": 3800
+    },
+    {
+        "team": "Man United",
+        "stadium": "Old Trafford",
+        "capacity": 74140,
+        "price": 3800
+    },
+    {
+        "team": "Newcastle",
+        "stadium": "St James' Park",
+        "capacity": 52409,
+        "price": 3000
+    },
+    {
+        "team": "Nottingham",
+        "stadium": "City Ground",
+        "capacity": 30602,
+        "price": 2500
+    },
+    {
+        "team": "Sunderland",
+        "stadium": "Stadium of Light",
+        "capacity": 49000,
+        "price": 2500
+    },
+    {
+        "team": "Tottenham",
+        "stadium": "Tottenham Hotspur Stadium",
+        "capacity": 62062,
+        "price": 3800
+    },
+    {
+        "team": "West Ham",
+        "stadium": "London Stadium",
+        "capacity": 62500,
+        "price": 3000
+    },
+    {
+        "team": "Wolverhampton",
+        "stadium": "Molineux Stadium",
+        "capacity": 31700,
+        "price": 2500
+    }
+]

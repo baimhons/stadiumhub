@@ -76,10 +76,13 @@ func ConnectMySQLDatabase(
 		&zone.Zone{},
 		&seat.Seat{},
 		&booking.Booking{},
+		&booking.BookingSeat{},
 	)
 
 	seed.SeedTeam(db)
 	match.SeedMatches(db)
+	seed.SeedZones(db)
+	seed.SeedSeats(db)
 
 	if errAutoMigrate != nil {
 		log.Fatalf("failed to auto migrate database: %v", errAutoMigrate)
