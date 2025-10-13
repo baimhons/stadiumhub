@@ -2,12 +2,14 @@ package initial
 
 import (
 	"github.com/baimhons/stadiumhub/internal/match"
+	"github.com/baimhons/stadiumhub/internal/seat"
 	"github.com/baimhons/stadiumhub/internal/user"
 )
 
 type Repository struct {
 	UserRepository  user.UserRepository
 	MatchRepository match.MatchRepository
+	SeatRepository  seat.SeatRepository
 }
 
 func NewRepository(clientConfig *clientConfig) *Repository {
@@ -16,6 +18,9 @@ func NewRepository(clientConfig *clientConfig) *Repository {
 			clientConfig.DB,
 		),
 		MatchRepository: match.NewMatchRepository(
+			clientConfig.DB,
+		),
+		SeatRepository: seat.NewSeatRepository(
 			clientConfig.DB,
 		),
 	}

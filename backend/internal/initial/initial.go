@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/baimhons/stadiumhub/internal"
+	"github.com/baimhons/stadiumhub/internal/worker"
 	"github.com/gin-gonic/gin"
 	"github.com/wisaitas/share-pkg/utils"
 )
@@ -27,7 +28,6 @@ func InitializeApp() *App {
 	clientConfig := newClientConfig()
 
 	ginEngine := gin.Default()
-
 	SetupMiddleware(ginEngine)
 
 	repository := NewRepository(clientConfig)
@@ -40,6 +40,8 @@ func InitializeApp() *App {
 		*handler,
 		*validate,
 	)
+
+	go worker.NewMatchWorker(service.MatchService).Start()
 
 	return &App{
 		App:          ginEngine,

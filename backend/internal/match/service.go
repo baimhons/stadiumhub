@@ -15,6 +15,7 @@ import (
 )
 
 type MatchService interface {
+	UpdateMatches(month int, year int) (string, int, error)
 	GetAllMatches(query *utils.PaginationQuery) (match []Match, statusCode int, err error)
 	GetMatchesByTeamID(teamID uint, query *utils.PaginationQuery) (match []Match, statusCode int, err error)
 	GetMatchesByDateRange(startDate, endDate string, query *utils.PaginationQuery) (match []Match, statusCode int, err error)
@@ -22,6 +23,12 @@ type MatchService interface {
 
 type matchServiceImpl struct {
 	matchRepo MatchRepository
+}
+
+func NewMatchService(matchRepo MatchRepository) MatchService {
+	return &matchServiceImpl{
+		matchRepo: matchRepo,
+	}
 }
 
 func fetchMatches(apiKey, dateFrom, dateTo string) ([]response.ApiMatch, error) {
@@ -110,8 +117,59 @@ func ifEmpty(val, fallback string) string {
 	return val
 }
 
-func NewMatchService(repo MatchRepository) MatchService {
-	return &matchServiceImpl{matchRepo: repo}
+func (s *matchServiceImpl) UpdateMatches(month int, year int) (string, int, error) {
+	apiKey := internal.ENV.APIFootball.APIKey
+
+	if year == 0 {
+		year = time.Now().Year()
+	}
+
+	firstDay := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
+	lastDay := firstDay.AddDate(0, 1, -1)
+
+	for start := firstDay; start.Before(lastDay); start = start.AddDate(0, 0, 7) {
+		end := start.AddDate(0, 0, 6)
+		if end.After(lastDay) {
+			end = lastDay
+		}
+
+		apiMatches, err := fetchMatches(
+			apiKey,
+			start.Format("2006-01-02"),
+			end.Format("2006-01-02"),
+		)
+		if err != nil {
+			return "", http.StatusInternalServerError, err
+		}
+
+		for _, m := range apiMatches {
+			utcDate, _ := time.Parse(time.RFC3339, m.UtcDate)
+			utcDate = utcDate.In(time.UTC)
+
+			t, err := s.matchRepo.GetTeamByID(m.HomeTeam.ID)
+			if err != nil {
+				fmt.Printf("team not found: %d\n", m.HomeTeam.ID)
+				continue
+			}
+
+			venue := ifEmpty(t.Venue, "Unknown Stadium")
+
+			entity := Match{
+				ID:         m.ID,
+				UTCDate:    utcDate,
+				Status:     m.Status,
+				HomeTeamID: m.HomeTeam.ID,
+				AwayTeamID: m.AwayTeam.ID,
+				Venue:      venue,
+			}
+
+			if err := s.matchRepo.UpdateOrCreateMatch(&entity); err != nil {
+				fmt.Printf("save failed match %d: %v\n", entity.ID, err)
+			}
+		}
+	}
+
+	return fmt.Sprintf("Updated matches for %02d/%d", month, year), http.StatusOK, nil
 }
 
 func (ms *matchServiceImpl) GetAllMatches(query *utils.PaginationQuery) (match []Match, statusCode int, err error) {

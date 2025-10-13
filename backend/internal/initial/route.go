@@ -2,6 +2,7 @@ package initial
 
 import (
 	"github.com/baimhons/stadiumhub/internal/match"
+	"github.com/baimhons/stadiumhub/internal/seat"
 	"github.com/baimhons/stadiumhub/internal/user"
 	"github.com/gin-gonic/gin"
 )
@@ -9,6 +10,7 @@ import (
 type route struct {
 	UserRoutes  *user.UserRoutes
 	MatchRoutes *match.MatchRoutes
+	SeatRoutes  *seat.SeatRoutes
 }
 
 func NewRoute(
@@ -27,6 +29,10 @@ func NewRoute(
 			apiRoute,
 			handler.MatchHandler,
 		),
+		SeatRoutes: seat.NewSeatRoutes(
+			apiRoute,
+			handler.SeatHandler,
+		),
 	}
 	route.setupRoute()
 }
@@ -34,4 +40,5 @@ func NewRoute(
 func (r *route) setupRoute() {
 	r.UserRoutes.RegisterRoutes()
 	r.MatchRoutes.RegisterRoutes()
+	r.SeatRoutes.RegisterRoutes()
 }

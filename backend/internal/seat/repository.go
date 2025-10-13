@@ -42,6 +42,8 @@ func (sr *seatRepositoryImpl) QueryAvailableSeat(matchID uint, teamID int, zoneI
 		query = query.Where("seats.zone_id = ?", *zoneID)
 	}
 
+	query = query.Order("seat_no ASC")
+
 	if err := query.Find(&seats).Error; err != nil {
 		return nil, err
 	}

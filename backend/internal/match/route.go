@@ -24,4 +24,5 @@ func (r *MatchRoutes) RegisterRoutes() {
 	r.group.GET("/", r.MatchHandler.GetAllMatches)
 	r.group.GET("/team/:teamID", r.MatchHandler.GetMatchesByTeamID)
 	r.group.GET("/date-range", r.MatchHandler.GetMatchesByDateRange)
+	r.group.POST("/update", r.MatchHandler.UpdateMatches)
 }

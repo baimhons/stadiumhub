@@ -5,12 +5,15 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/baimhons/stadiumhub/internal/team"
 	"github.com/baimhons/stadiumhub/internal/utils"
 	"gorm.io/gorm"
 )
 
 type MatchRepository interface {
 	utils.BaseRepository[Match]
+	GetTeamByID(teamID int) (*team.Team, error)
+	UpdateOrCreateMatch(entity *Match) error
 	GetAllMatches(query *utils.PaginationQuery) ([]Match, int, error)
 	GetMatchesByTeamID(teamID uint, query *utils.PaginationQuery) ([]Match, int, error)
 	GetMatchesByDateRange(startDate, endDate string, query *utils.PaginationQuery) ([]Match, int, error)
@@ -26,6 +29,18 @@ func NewMatchRepository(db *gorm.DB) MatchRepository {
 		BaseRepository: utils.NewBaseRepository[Match](db),
 		db:             db,
 	}
+}
+
+func (mr *matchRepositoryImpl) GetTeamByID(teamID int) (*team.Team, error) {
+	var t team.Team
+	if err := mr.db.Where("id = ?", teamID).First(&t).Error; err != nil {
+		return nil, err
+	}
+	return &t, nil
+}
+
+func (mr *matchRepositoryImpl) UpdateOrCreateMatch(entity *Match) error {
+	return mr.db.Save(entity).Error
 }
 
 func (mr *matchRepositoryImpl) GetAllMatches(query *utils.PaginationQuery) ([]Match, int, error) {
