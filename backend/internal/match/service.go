@@ -14,6 +14,16 @@ import (
 	"gorm.io/gorm"
 )
 
+type MatchService interface {
+	GetAllMatches(query *utils.PaginationQuery) (match []Match, statusCode int, err error)
+	GetMatchesByTeamID(teamID uint, query *utils.PaginationQuery) (match []Match, statusCode int, err error)
+	GetMatchesByDateRange(startDate, endDate string, query *utils.PaginationQuery) (match []Match, statusCode int, err error)
+}
+
+type matchServiceImpl struct {
+	matchRepo MatchRepository
+}
+
 func fetchMatches(apiKey, dateFrom, dateTo string) ([]response.ApiMatch, error) {
 	url := fmt.Sprintf(
 		"https://api.football-data.org/v4/matches?competitions=PL&dateFrom=%s&dateTo=%s",
@@ -69,7 +79,7 @@ func SeedMatches(db *gorm.DB) {
 			utcDate = utcDate.In(time.UTC)
 			t := team.Team{}
 			if err := db.Where("ID = ?", m.HomeTeam.ID).First(&t).Error; err != nil {
-				fmt.Printf("❌ team not found: %d\n", m.HomeTeam.ID)
+				fmt.Printf("team not found: %d\n", m.HomeTeam.ID)
 				continue
 			}
 			venue := ifEmpty(t.Venue, "Unknown Stadium")
@@ -84,9 +94,9 @@ func SeedMatches(db *gorm.DB) {
 			}
 
 			if err := matchRepo.Create(&entity); err != nil {
-				fmt.Printf("❌ save failed match %d: %v\n", entity.ID, err)
+				fmt.Printf("save failed match %d: %v\n", entity.ID, err)
 			} else {
-				fmt.Printf("✅ saved match: %d vs %d (%s)\n",
+				fmt.Printf("saved match: %d vs %d (%s)\n",
 					entity.HomeTeam.ID, entity.AwayTeam.ID, entity.UTCDate.Format("2006-01-02"))
 			}
 		}
@@ -98,4 +108,20 @@ func ifEmpty(val, fallback string) string {
 		return fallback
 	}
 	return val
+}
+
+func NewMatchService(repo MatchRepository) MatchService {
+	return &matchServiceImpl{matchRepo: repo}
+}
+
+func (ms *matchServiceImpl) GetAllMatches(query *utils.PaginationQuery) (match []Match, statusCode int, err error) {
+	return ms.matchRepo.GetAllMatches(query)
+}
+
+func (ms *matchServiceImpl) GetMatchesByTeamID(teamID uint, query *utils.PaginationQuery) (match []Match, statusCode int, err error) {
+	return ms.matchRepo.GetMatchesByTeamID(teamID, query)
+}
+
+func (ms *matchServiceImpl) GetMatchesByDateRange(startDate, endDate string, query *utils.PaginationQuery) (match []Match, statusCode int, err error) {
+	return ms.matchRepo.GetMatchesByDateRange(startDate, endDate, query)
 }

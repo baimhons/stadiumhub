@@ -1,19 +1,21 @@
 package seat
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
 type SeatService interface {
+	GetAvailableSeats(matchID uint, teamID int, zoneID *uuid.UUID) ([]Seat, error)
 }
+
 type seatServiceImpl struct {
-	seatRepo SeatRepository
+	repo SeatRepository
 }
 
-func NewSeatService(seatRepo SeatRepository) SeatService {
-	return &seatServiceImpl{
-		seatRepo: seatRepo,
-	}
+func NewSeatService(repo SeatRepository) SeatService {
+	return &seatServiceImpl{repo: repo}
 }
 
-func (sr *seatRepositoryImpl) SearchAvaliableSeat(matchID uint, seatID uuid.UUID) ([]Seat, error) {
-	return nil, nil
+func (s *seatServiceImpl) GetAvailableSeats(matchID uint, teamID int, zoneID *uuid.UUID) ([]Seat, error) {
+	return s.repo.QueryAvailableSeat(matchID, teamID, zoneID)
 }
