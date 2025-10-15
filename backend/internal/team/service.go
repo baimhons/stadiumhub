@@ -81,3 +81,5 @@ func (ts *teamServiceImpl) InsertTeamCapacityAndPrice() error {
 
 	return nil
 }
+
+//get all team to show and use for get match by team id

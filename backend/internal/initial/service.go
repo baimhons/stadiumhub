@@ -1,6 +1,7 @@
 package initial
 
 import (
+	"github.com/baimhons/stadiumhub/internal/booking"
 	"github.com/baimhons/stadiumhub/internal/match"
 	"github.com/baimhons/stadiumhub/internal/seat"
 	"github.com/baimhons/stadiumhub/internal/user"
@@ -8,9 +9,10 @@ import (
 )
 
 type Service struct {
-	UserService  user.UserService
-	MatchService match.MatchService
-	SeatService  seat.SeatService
+	UserService    user.UserService
+	MatchService   match.MatchService
+	SeatService    seat.SeatService
+	BookingService booking.BookingService
 }
 
 func NewService(repo *Repository, redis utils.RedisClient) *Service {
@@ -24,6 +26,9 @@ func NewService(repo *Repository, redis utils.RedisClient) *Service {
 		),
 		SeatService: seat.NewSeatService(
 			repo.SeatRepository,
+		),
+		BookingService: booking.NewBookingService(
+			repo.BookingRepository,
 		),
 	}
 }

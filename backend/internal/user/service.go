@@ -22,7 +22,7 @@ type UserService interface {
 	LoginUser(req request.LoginUser) (resp utils.SuccessResponse, statusCode int, err error)
 	LogoutUser(userCtx models.UserContext) (statusCode int, err error)
 	GetUserProfile(userCtx models.UserContext) (resp utils.SuccessResponse, statusCode int, err error)
-	UpdateUser(req request.UpdateUser) (resp utils.SuccessResponse, statusCode int, err error)
+	UpdateUser(userCtx models.UserContext, req request.UpdateUser) (resp utils.SuccessResponse, statusCode int, err error)
 }
 
 type userServiceImpl struct {
@@ -183,9 +183,10 @@ func (us *userServiceImpl) GetUserProfile(userCtx models.UserContext) (resp util
 	}, http.StatusOK, nil
 }
 
-func (us *userServiceImpl) UpdateUser(req request.UpdateUser) (resp utils.SuccessResponse, statusCode int, err error) {
+func (us *userServiceImpl) UpdateUser(userCtx models.UserContext, req request.UpdateUser) (resp utils.SuccessResponse, statusCode int, err error) {
 	user := User{}
-	if err := us.userRepository.GetBy("email", req.Email, &user); err != nil {
+
+	if err := us.userRepository.GetBy("id", userCtx.ID.String(), &user); err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return resp, http.StatusNotFound, errors.New("user not found")
 		}
@@ -195,6 +196,7 @@ func (us *userServiceImpl) UpdateUser(req request.UpdateUser) (resp utils.Succes
 	user.Username = req.Username
 	user.FirstName = req.FirstName
 	user.LastName = req.LastName
+	user.Email = req.Email
 	user.PhoneNumber = req.PhoneNumber
 
 	if err := us.userRepository.Update(&user); err != nil {

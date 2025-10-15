@@ -113,21 +113,31 @@ func (h *userHandlerImpl) GetUserProfile(c *gin.Context) {
 }
 
 func (h *userHandlerImpl) UpdateUser(c *gin.Context) {
-	req, ok := c.Get("req")
-
-	if !ok {
+	req, exists := c.Get("req")
+	if !exists {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid request"})
 		return
 	}
 
-	UpdateReq, ok := req.(request.UpdateUser)
-
+	updateReq, ok := req.(request.UpdateUser)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid request type"})
 		return
 	}
 
-	resp, status, err := h.userService.UpdateUser(UpdateReq)
+	userCtxRaw, exists := c.Get("userContext")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized"})
+		return
+	}
+
+	userCtx, ok := userCtxRaw.(models.UserContext)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid user context"})
+		return
+	}
+
+	resp, status, err := h.userService.UpdateUser(userCtx, updateReq)
 	if err != nil {
 		c.JSON(status, gin.H{"message": err.Error()})
 		return
