@@ -35,10 +35,13 @@ func InitializeApp() *App {
 	handler := NewHandler(service)
 	validate := NewValidate()
 
+	middleware := NewMiddleware(clientConfig.Redis, clientConfig.JWT, internal.ENV.JWTSecret.Secret)
+
 	NewRoute(
 		ginEngine,
 		*handler,
 		*validate,
+		*middleware,
 	)
 
 	go worker.NewMatchWorker(service.MatchService).Start()

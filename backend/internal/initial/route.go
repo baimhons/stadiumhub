@@ -17,6 +17,7 @@ func NewRoute(
 	engine *gin.Engine,
 	handler Handler,
 	validate Validate,
+	middleware Middleware,
 ) {
 	apiRoute := engine.Group("/api/v1")
 	route := &route{
@@ -24,6 +25,7 @@ func NewRoute(
 			apiRoute,
 			handler.UserHandler,
 			validate.UserValidate,
+			middleware.AuthMiddleware,
 		),
 		MatchRoutes: match.NewMatchRoutes(
 			apiRoute,

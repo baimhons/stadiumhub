@@ -1,8 +1,10 @@
 package user
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/baimhons/stadiumhub/internal/models"
 	"github.com/baimhons/stadiumhub/internal/user/api/request"
 	"github.com/baimhons/stadiumhub/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -64,6 +66,7 @@ func (u *userValidate) ValidateUpdateUser(c *gin.Context) {
 	var req request.UpdateUser
 
 	if err := utils.ValidateCommonRequestBody(c, &req); err != nil {
+		fmt.Println("err")
 		c.JSON(http.StatusBadRequest, utils.ErrorResponse{
 			Message: err.Error(),
 		})
@@ -85,7 +88,7 @@ func (u *userValidate) ValidateRoleAdmin(c *gin.Context) {
 		return
 	}
 
-	if uc, ok := userContext.(UserContext); ok {
+	if uc, ok := userContext.(models.UserContext); ok {
 		if uc.Role != "admin" {
 			c.JSON(http.StatusForbidden, utils.ErrorResponse{
 				Message: "Forbidden",

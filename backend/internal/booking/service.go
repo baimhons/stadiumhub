@@ -9,3 +9,5 @@ package booking
 //cancel booking
 
 //get all bookings (admin)
+
+//update booking status

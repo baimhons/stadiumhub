@@ -20,6 +20,7 @@ import (
 type clientConfig struct {
 	DB    *gorm.DB
 	Redis utils.RedisClient
+	JWT   utils.JWT
 }
 
 func newClientConfig() *clientConfig {
@@ -37,11 +38,14 @@ func newClientConfig() *clientConfig {
 		internal.ENV.Redis.Password,
 	)
 
+	jwt := utils.NewJWT()
+
 	redisWrapper := utils.NewRedisClient(redis)
 
 	return &clientConfig{
 		DB:    db,
 		Redis: redisWrapper,
+		JWT:   jwt,
 	}
 }
 

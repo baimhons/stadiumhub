@@ -2,12 +2,14 @@ package user
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/baimhons/stadiumhub/internal"
+	"github.com/baimhons/stadiumhub/internal/models"
 	"github.com/baimhons/stadiumhub/internal/user/api/request"
 	"github.com/baimhons/stadiumhub/internal/user/api/response"
 	"github.com/baimhons/stadiumhub/internal/utils"
@@ -16,8 +18,11 @@ import (
 )
 
 type UserService interface {
-	LoginUser(req request.LoginUser) (resp utils.SuccessResponse, statusCode int, err error)
 	RegisterUser(req request.RegisterUser) (resp utils.SuccessResponse, statusCode int, err error)
+	LoginUser(req request.LoginUser) (resp utils.SuccessResponse, statusCode int, err error)
+	LogoutUser(userCtx models.UserContext) (statusCode int, err error)
+	GetUserProfile(userCtx models.UserContext) (resp utils.SuccessResponse, statusCode int, err error)
+	UpdateUser(req request.UpdateUser) (resp utils.SuccessResponse, statusCode int, err error)
 }
 
 type userServiceImpl struct {
@@ -38,14 +43,14 @@ func (us *userServiceImpl) RegisterUser(req request.RegisterUser) (resp utils.Su
 	if err := us.userRepository.GetBy("email", req.Email, &user); err == nil {
 		return resp, http.StatusConflict, errors.New("email already exists")
 	}
-
 	if err := us.userRepository.GetBy("username", req.Username, &user); err == nil {
 		return resp, http.StatusConflict, errors.New("username already exists")
 	}
 
 	newUser := User{
 		Username:    req.Username,
-		FullName:    req.FullName,
+		FirstName:   req.FirstName,
+		LastName:    req.LastName,
 		Email:       req.Email,
 		PhoneNumber: req.PhoneNumber,
 		Role:        "user",
@@ -55,16 +60,13 @@ func (us *userServiceImpl) RegisterUser(req request.RegisterUser) (resp utils.Su
 	if err != nil {
 		return resp, http.StatusInternalServerError, err
 	}
-
 	newUser.Password = string(hashPassword)
 
 	tx := us.userRepository.Begin()
-
 	if err := tx.Create(&newUser).Error; err != nil {
 		tx.Rollback()
 		return resp, http.StatusInternalServerError, err
 	}
-
 	tx.Commit()
 
 	return utils.SuccessResponse{
@@ -74,9 +76,8 @@ func (us *userServiceImpl) RegisterUser(req request.RegisterUser) (resp utils.Su
 }
 
 func (us *userServiceImpl) LoginUser(req request.LoginUser) (resp utils.SuccessResponse, statusCode int, err error) {
-
 	user := User{}
-	// หาด้วย email หรือ username
+
 	if err := us.userRepository.GetByUsernameOrEmail(req.UsernameOrEmail, &user); err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return resp, http.StatusNotFound, errors.New("user not found")
@@ -84,12 +85,10 @@ func (us *userServiceImpl) LoginUser(req request.LoginUser) (resp utils.SuccessR
 		return resp, http.StatusInternalServerError, err
 	}
 
-	// ตรวจสอบรหัสผ่าน
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		return resp, http.StatusUnauthorized, errors.New("invalid credentials")
 	}
 
-	// ===== Generate Token =====
 	timeNow := time.Now()
 	accessTokenExp := timeNow.Add(time.Hour * 1)
 	refreshTokenExp := timeNow.Add(time.Hour * 24)
@@ -101,7 +100,6 @@ func (us *userServiceImpl) LoginUser(req request.LoginUser) (resp utils.SuccessR
 		"username": user.Username,
 		"role":     user.Role,
 	}, accessTokenExp.Unix(), secret)
-
 	if err != nil {
 		return resp, http.StatusInternalServerError, err
 	}
@@ -115,12 +113,31 @@ func (us *userServiceImpl) LoginUser(req request.LoginUser) (resp utils.SuccessR
 	if err != nil {
 		return resp, http.StatusInternalServerError, err
 	}
+	userContext := models.UserContext{
+		ID:       user.ID,
+		Username: user.Username,
+		Role:     user.Role,
+		Email:    user.Email,
+	}
 
-	// เก็บ token ไว้ใน Redis
-	if err := us.redis.Set(context.Background(), fmt.Sprintf("access_token:%s", user.ID), accessToken, accessTokenExp.Sub(timeNow)); err != nil {
+	userContextJSON, _ := json.Marshal(userContext)
+
+	if err := us.redis.Set(
+		context.Background(),
+		fmt.Sprintf("access_token:%s", user.ID),
+		userContextJSON,
+		accessTokenExp.Sub(timeNow),
+	); err != nil {
 		return resp, http.StatusInternalServerError, err
 	}
-	if err := us.redis.Set(context.Background(), fmt.Sprintf("refresh_token:%s", user.ID), refreshToken, refreshTokenExp.Sub(timeNow)); err != nil {
+
+	// ยังคงเก็บ refresh token เป็น string ได้
+	if err := us.redis.Set(
+		context.Background(),
+		fmt.Sprintf("refresh_token:%s", user.ID),
+		refreshToken,
+		refreshTokenExp.Sub(timeNow),
+	); err != nil {
 		return resp, http.StatusInternalServerError, err
 	}
 
@@ -129,6 +146,71 @@ func (us *userServiceImpl) LoginUser(req request.LoginUser) (resp utils.SuccessR
 		Data: response.LoginUserResponse{
 			AccessToken:  accessToken,
 			RefreshToken: refreshToken,
+		},
+	}, http.StatusOK, nil
+}
+
+func (us *userServiceImpl) LogoutUser(userCtx models.UserContext) (statusCode int, err error) {
+	if err := us.redis.Del(context.Background(), fmt.Sprintf("access_token:%s", userCtx.ID)); err != nil {
+		return http.StatusInternalServerError, err
+	}
+	if err := us.redis.Del(context.Background(), fmt.Sprintf("refresh_token:%s", userCtx.ID)); err != nil {
+		return http.StatusInternalServerError, err
+	}
+	return http.StatusOK, nil
+}
+
+func (us *userServiceImpl) GetUserProfile(userCtx models.UserContext) (resp utils.SuccessResponse, statusCode int, err error) {
+	user := User{}
+	if err := us.userRepository.GetBy("id", userCtx.ID.String(), &user); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return resp, http.StatusNotFound, errors.New("user not found")
+		}
+		return resp, http.StatusInternalServerError, err
+	}
+
+	return utils.SuccessResponse{
+		Message: "User profile fetched successfully!",
+		Data: response.UserProfileResponse{
+			ID:          user.ID,
+			Username:    user.Username,
+			Email:       user.Email,
+			FirstName:   user.FirstName,
+			LastName:    user.LastName,
+			PhoneNumber: user.PhoneNumber,
+			Role:        user.Role,
+		},
+	}, http.StatusOK, nil
+}
+
+func (us *userServiceImpl) UpdateUser(req request.UpdateUser) (resp utils.SuccessResponse, statusCode int, err error) {
+	user := User{}
+	if err := us.userRepository.GetBy("email", req.Email, &user); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return resp, http.StatusNotFound, errors.New("user not found")
+		}
+		return resp, http.StatusInternalServerError, err
+	}
+
+	user.Username = req.Username
+	user.FirstName = req.FirstName
+	user.LastName = req.LastName
+	user.PhoneNumber = req.PhoneNumber
+
+	if err := us.userRepository.Update(&user); err != nil {
+		return resp, http.StatusInternalServerError, err
+	}
+
+	return utils.SuccessResponse{
+		Message: "User updated successfully!",
+		Data: response.UserProfileResponse{
+			ID:          user.ID,
+			Username:    user.Username,
+			Email:       user.Email,
+			FirstName:   user.FirstName,
+			LastName:    user.LastName,
+			PhoneNumber: user.PhoneNumber,
+			Role:        user.Role,
 		},
 	}, http.StatusOK, nil
 }
