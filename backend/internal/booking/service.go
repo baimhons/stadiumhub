@@ -248,6 +248,8 @@ func (bs *bookingServiceImpl) GetAllBookings(query *utils.PaginationQuery) (resp
 			UpdatedAt:  b.UpdatedAt,
 		}
 
+		b.User.Password = ""
+
 		if b.User.ID != uuid.Nil {
 			br.User = b.User
 		}

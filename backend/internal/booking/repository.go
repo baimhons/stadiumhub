@@ -86,7 +86,7 @@ func (br *bookingRepositoryImpl) GetAllWithRelations(pagination *utils.Paginatio
 		Preload("User").
 		Preload("Match.HomeTeam").
 		Preload("Match.AwayTeam").
-		Preload("BookingSeats.Seat.Zone.Team")
+		Preload("Seats.Seat.Zone.Team")
 
 	if pagination.Page != nil && pagination.PageSize != nil {
 		offset := (*pagination.Page - 1) * (*pagination.PageSize)
