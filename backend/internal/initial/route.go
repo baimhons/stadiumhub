@@ -5,6 +5,7 @@ import (
 	"github.com/baimhons/stadiumhub/internal/match"
 	"github.com/baimhons/stadiumhub/internal/seat"
 	"github.com/baimhons/stadiumhub/internal/user"
+	"github.com/baimhons/stadiumhub/internal/zone"
 	"github.com/gin-gonic/gin"
 )
 
@@ -13,6 +14,7 @@ type route struct {
 	MatchRoutes   *match.MatchRoutes
 	SeatRoutes    *seat.SeatRoutes
 	BookingRoutes *booking.BookingRoutes
+	ZoneRoutes    *zone.ZoneRoutes
 }
 
 func NewRoute(
@@ -46,6 +48,10 @@ func NewRoute(
 			validate.UserValidate,
 			middleware.AuthMiddleware,
 		),
+		ZoneRoutes: zone.NewZoneRoutes(
+			apiRoute,
+			handler.ZoneHandler,
+		),
 	}
 	route.setupRoute()
 }
@@ -55,4 +61,5 @@ func (r *route) setupRoute() {
 	r.MatchRoutes.RegisterRoutes()
 	r.SeatRoutes.RegisterRoutes()
 	r.BookingRoutes.RegisterRoutes()
+	r.ZoneRoutes.RegisterRoutes()
 }

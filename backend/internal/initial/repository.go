@@ -5,6 +5,7 @@ import (
 	"github.com/baimhons/stadiumhub/internal/match"
 	"github.com/baimhons/stadiumhub/internal/seat"
 	"github.com/baimhons/stadiumhub/internal/user"
+	"github.com/baimhons/stadiumhub/internal/zone"
 )
 
 type Repository struct {
@@ -12,6 +13,7 @@ type Repository struct {
 	MatchRepository   match.MatchRepository
 	SeatRepository    seat.SeatRepository
 	BookingRepository booking.BookingRepository
+	ZoneRepository    zone.ZoneRepository
 }
 
 func NewRepository(clientConfig *clientConfig) *Repository {
@@ -26,6 +28,9 @@ func NewRepository(clientConfig *clientConfig) *Repository {
 			clientConfig.DB,
 		),
 		BookingRepository: booking.NewBookingRepository(
+			clientConfig.DB,
+		),
+		ZoneRepository: zone.NewZoneRepository(
 			clientConfig.DB,
 		),
 	}

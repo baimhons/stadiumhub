@@ -1,6 +1,7 @@
 package booking
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -60,19 +61,26 @@ func (br *bookingRepositoryImpl) GetBookingsByUserID(userID uuid.UUID, query *ut
 	return bookings, http.StatusOK, nil
 }
 
-func (r *bookingRepositoryImpl) GetByIDWithRelations(id uuid.UUID) (*Booking, error) {
+func (br *bookingRepositoryImpl) GetByIDWithRelations(id uuid.UUID) (*Booking, error) {
 	var booking Booking
-	if err := r.db.
+
+	err := br.db.
 		Preload("User").
-		Preload("Match").
 		Preload("Match.HomeTeam").
 		Preload("Match.AwayTeam").
 		Preload("Seats").
-		First(&booking, "id = ?", id).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, fmt.Errorf("booking not found")
+		Preload("Seats.Seat.Zone.Team").
+		First(&booking, "id = ?", id).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("booking not found")
 		}
 		return nil, err
+	}
+
+	if len(booking.Seats) == 0 {
+		fmt.Println("[DEBUG] booking.Seats empty for booking:", booking.ID)
 	}
 
 	return &booking, nil

@@ -100,6 +100,7 @@ func (bs *bookingServiceImpl) CreateBooking(userCtx models.UserContext, req requ
 		bookingSeats = append(bookingSeats, BookingSeat{
 			BookingID: newBooking.ID,
 			SeatID:    s.ID,
+			SeatNo:    s.SeatNo,
 			Price:     int(seatPrice),
 		})
 	}
@@ -115,10 +116,11 @@ func (bs *bookingServiceImpl) CreateBooking(userCtx models.UserContext, req requ
 	}
 
 	var seatResp []response.BookingSeatResp
-	for _, bs := range bookingSeats {
+	for _, s := range validSeats {
 		seatResp = append(seatResp, response.BookingSeatResp{
-			SeatID: bs.SeatID,
-			Price:  bs.Price,
+			SeatID: s.ID,
+			SeatNo: s.SeatNo,
+			Price:  int(seatPrice),
 		})
 	}
 
@@ -153,6 +155,7 @@ func (bs *bookingServiceImpl) GetBookingByID(id uuid.UUID, userCtx models.UserCo
 	for _, bs := range booking.Seats {
 		seatResp = append(seatResp, response.BookingSeatResp{
 			SeatID: bs.SeatID,
+			SeatNo: bs.SeatNo,
 			Price:  bs.Price,
 		})
 	}
@@ -261,6 +264,7 @@ func (bs *bookingServiceImpl) GetAllBookings(query *utils.PaginationQuery) (resp
 		for _, bs := range b.Seats {
 			br.Seats = append(br.Seats, response.BookingSeatResp{
 				SeatID: bs.Seat.ID,
+				SeatNo: bs.SeatNo,
 				Price:  bs.Price,
 			})
 		}

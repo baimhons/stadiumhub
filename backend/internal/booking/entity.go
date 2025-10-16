@@ -32,6 +32,7 @@ type BookingSeat struct {
 	BookingID uuid.UUID `gorm:"type:char(36);not null"`
 	Booking   Booking   `gorm:"foreignKey:BookingID"`
 	SeatID    uuid.UUID `gorm:"type:char(36);not null"`
+	SeatNo    string    `gorm:"type:char(12);not null"`
 	Seat      seat.Seat `gorm:"foreignKey:SeatID"`
 	Price     int       `gorm:"not null"`
 }

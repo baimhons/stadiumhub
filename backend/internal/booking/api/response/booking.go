@@ -23,5 +23,6 @@ type BookingResponse struct {
 
 type BookingSeatResp struct {
 	SeatID uuid.UUID `json:"seat_id"`
+	SeatNo string    `json:"seat_no"`
 	Price  int       `json:"price"`
 }

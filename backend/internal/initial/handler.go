@@ -5,6 +5,7 @@ import (
 	"github.com/baimhons/stadiumhub/internal/match"
 	"github.com/baimhons/stadiumhub/internal/seat"
 	"github.com/baimhons/stadiumhub/internal/user"
+	"github.com/baimhons/stadiumhub/internal/zone"
 )
 
 type Handler struct {
@@ -12,6 +13,7 @@ type Handler struct {
 	MatchHandler   match.MatchHandler
 	SeatHandler    seat.SeatHandler
 	BookingHandler booking.BookingHandler
+	ZoneHandler    zone.ZoneHandler
 }
 
 func NewHandler(service *Service) *Handler {
@@ -20,5 +22,6 @@ func NewHandler(service *Service) *Handler {
 		MatchHandler:   match.NewMatchHandler(service.MatchService),
 		SeatHandler:    seat.NewSeatHandler(service.SeatService),
 		BookingHandler: booking.NewBookingHandler(service.BookingService),
+		ZoneHandler:    zone.NewZoneHandler(service.ZoneService),
 	}
 }
