@@ -5,6 +5,7 @@ import (
 
 	"github.com/baimhons/stadiumhub/internal/models"
 	"github.com/baimhons/stadiumhub/internal/user/api/request"
+	"github.com/baimhons/stadiumhub/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,19 +28,28 @@ func NewUserHandler(userService UserService) UserHandler {
 func (h *userHandlerImpl) RegisterUser(c *gin.Context) {
 	req, ok := c.Get("req")
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid request"})
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse{
+			Message: "invalid request",
+			Error:   nil,
+		})
 		return
 	}
 
 	registerReq, ok := req.(request.RegisterUser)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid request type"})
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse{
+			Message: "invalid request type",
+			Error:   nil,
+		})
 		return
 	}
 
 	resp, status, err := h.userService.RegisterUser(registerReq)
 	if err != nil {
-		c.JSON(status, gin.H{"message": err.Error()})
+		c.JSON(status, utils.ErrorResponse{
+			Message: err.Error(),
+			Error:   err,
+		})
 		return
 	}
 
@@ -49,19 +59,28 @@ func (h *userHandlerImpl) RegisterUser(c *gin.Context) {
 func (h *userHandlerImpl) LoginUser(c *gin.Context) {
 	req, ok := c.Get("req")
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid request"})
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse{
+			Message: "invalid request",
+			Error:   nil,
+		})
 		return
 	}
 
 	loginReq, ok := req.(request.LoginUser)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid request type"})
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse{
+			Message: "invalid request type",
+			Error:   nil,
+		})
 		return
 	}
 
 	resp, status, err := h.userService.LoginUser(loginReq)
 	if err != nil {
-		c.JSON(status, gin.H{"message": err.Error()})
+		c.JSON(status, utils.ErrorResponse{
+			Message: err.Error(),
+			Error:   err,
+		})
 		return
 	}
 
@@ -71,19 +90,28 @@ func (h *userHandlerImpl) LoginUser(c *gin.Context) {
 func (h *userHandlerImpl) LogoutUser(c *gin.Context) {
 	userCtx, exists := c.Get("userContext")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized"})
+		c.JSON(http.StatusUnauthorized, utils.ErrorResponse{
+			Message: "unauthorized",
+			Error:   nil,
+		})
 		return
 	}
 
 	ctx, ok := userCtx.(models.UserContext)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid user context"})
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse{
+			Message: "invalid user context",
+			Error:   nil,
+		})
 		return
 	}
 
 	status, err := h.userService.LogoutUser(ctx)
 	if err != nil {
-		c.JSON(status, gin.H{"message": err.Error()})
+		c.JSON(status, utils.ErrorResponse{
+			Message: err.Error(),
+			Error:   err,
+		})
 		return
 	}
 
@@ -93,19 +121,28 @@ func (h *userHandlerImpl) LogoutUser(c *gin.Context) {
 func (h *userHandlerImpl) GetUserProfile(c *gin.Context) {
 	userCtx, exists := c.Get("userContext")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized"})
+		c.JSON(http.StatusUnauthorized, utils.ErrorResponse{
+			Message: "unauthorized",
+			Error:   nil,
+		})
 		return
 	}
 
 	ctx, ok := userCtx.(models.UserContext)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid user context"})
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse{
+			Message: "invalid user context",
+			Error:   nil,
+		})
 		return
 	}
 
 	resp, status, err := h.userService.GetUserProfile(ctx)
 	if err != nil {
-		c.JSON(status, gin.H{"message": err.Error()})
+		c.JSON(status, utils.ErrorResponse{
+			Message: err.Error(),
+			Error:   err,
+		})
 		return
 	}
 
@@ -115,31 +152,46 @@ func (h *userHandlerImpl) GetUserProfile(c *gin.Context) {
 func (h *userHandlerImpl) UpdateUser(c *gin.Context) {
 	req, exists := c.Get("req")
 	if !exists {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid request"})
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse{
+			Message: "invalid request",
+			Error:   nil,
+		})
 		return
 	}
 
 	updateReq, ok := req.(request.UpdateUser)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid request type"})
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse{
+			Message: "invalid request type",
+			Error:   nil,
+		})
 		return
 	}
 
 	userCtxRaw, exists := c.Get("userContext")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized"})
+		c.JSON(http.StatusUnauthorized, utils.ErrorResponse{
+			Message: "unauthorized",
+			Error:   nil,
+		})
 		return
 	}
 
 	userCtx, ok := userCtxRaw.(models.UserContext)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid user context"})
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse{
+			Message: "invalid user context",
+			Error:   nil,
+		})
 		return
 	}
 
 	resp, status, err := h.userService.UpdateUser(userCtx, updateReq)
 	if err != nil {
-		c.JSON(status, gin.H{"message": err.Error()})
+		c.JSON(status, utils.ErrorResponse{
+			Message: err.Error(),
+			Error:   err,
+		})
 		return
 	}
 

@@ -4,6 +4,7 @@ import (
 	"github.com/baimhons/stadiumhub/internal/booking"
 	"github.com/baimhons/stadiumhub/internal/match"
 	"github.com/baimhons/stadiumhub/internal/seat"
+	"github.com/baimhons/stadiumhub/internal/team"
 	"github.com/baimhons/stadiumhub/internal/user"
 	"github.com/baimhons/stadiumhub/internal/utils"
 	"github.com/baimhons/stadiumhub/internal/zone"
@@ -15,6 +16,7 @@ type Service struct {
 	SeatService    seat.SeatService
 	BookingService booking.BookingService
 	ZoneService    zone.ZoneService
+	TeamService    team.TeamService
 }
 
 func NewService(repo *Repository, redis utils.RedisClient) *Service {
@@ -34,6 +36,9 @@ func NewService(repo *Repository, redis utils.RedisClient) *Service {
 		),
 		ZoneService: zone.NewZoneService(
 			repo.ZoneRepository,
+		),
+		TeamService: team.NewTeamService(
+			repo.TeamRepository,
 		),
 	}
 }

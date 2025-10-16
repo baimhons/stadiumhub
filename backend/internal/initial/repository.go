@@ -4,6 +4,7 @@ import (
 	"github.com/baimhons/stadiumhub/internal/booking"
 	"github.com/baimhons/stadiumhub/internal/match"
 	"github.com/baimhons/stadiumhub/internal/seat"
+	"github.com/baimhons/stadiumhub/internal/team"
 	"github.com/baimhons/stadiumhub/internal/user"
 	"github.com/baimhons/stadiumhub/internal/zone"
 )
@@ -14,6 +15,7 @@ type Repository struct {
 	SeatRepository    seat.SeatRepository
 	BookingRepository booking.BookingRepository
 	ZoneRepository    zone.ZoneRepository
+	TeamRepository    team.TeamRepository
 }
 
 func NewRepository(clientConfig *clientConfig) *Repository {
@@ -31,6 +33,9 @@ func NewRepository(clientConfig *clientConfig) *Repository {
 			clientConfig.DB,
 		),
 		ZoneRepository: zone.NewZoneRepository(
+			clientConfig.DB,
+		),
+		TeamRepository: team.NewTeamRepository(
 			clientConfig.DB,
 		),
 	}

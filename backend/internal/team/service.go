@@ -10,6 +10,7 @@ import (
 
 type TeamService interface {
 	InsertTeamCapacityAndPrice() error
+	GetAllTeam(query *utils.PaginationQuery) ([]Team, error)
 }
 type teamServiceImpl struct {
 	teamRepository TeamRepository
@@ -82,4 +83,13 @@ func (ts *teamServiceImpl) InsertTeamCapacityAndPrice() error {
 	return nil
 }
 
-//get all team to show and use for get match by team id
+// get all team to show and use for get match by team id
+func (ts *teamServiceImpl) GetAllTeam(query *utils.PaginationQuery) ([]Team, error) {
+	var teams []Team
+
+	if err := ts.teamRepository.GetAll(&teams, query); err != nil {
+		return nil, err
+	}
+
+	return teams, nil
+}
