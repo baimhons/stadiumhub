@@ -33,6 +33,7 @@ func NewRoute(
 			apiRoute,
 			handler.MatchHandler,
 			validate.UserValidate,
+			middleware.AuthMiddleware,
 		),
 		SeatRoutes: seat.NewSeatRoutes(
 			apiRoute,
@@ -42,6 +43,7 @@ func NewRoute(
 			apiRoute,
 			handler.BookingHandler,
 			validate.BookingValidate,
+			validate.UserValidate,
 			middleware.AuthMiddleware,
 		),
 	}

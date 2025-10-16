@@ -12,8 +12,3 @@ type CreateBookingRequest struct {
 type CancelBookingRequest struct {
 	BookingID uuid.UUID `json:"booking_id" binding:"required"`
 }
-
-type UpdateBookingStatusRequest struct {
-	BookingID uuid.UUID `json:"booking_id" binding:"required"`
-	Status    string    `json:"status" binding:"required,oneof=PENDING PAID CANCELED"`
-}

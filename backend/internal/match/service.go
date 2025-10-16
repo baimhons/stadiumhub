@@ -153,7 +153,7 @@ func (s *matchServiceImpl) UpdateMatches(month int, year int) (string, int, erro
 			}
 
 			venue := ifEmpty(t.Venue, "Unknown Stadium")
-
+			now := time.Now().UTC()
 			entity := Match{
 				ID:         m.ID,
 				UTCDate:    utcDate,
@@ -161,6 +161,8 @@ func (s *matchServiceImpl) UpdateMatches(month int, year int) (string, int, erro
 				HomeTeamID: m.HomeTeam.ID,
 				AwayTeamID: m.AwayTeam.ID,
 				Venue:      venue,
+				CreatedAt:  now,
+				UpdatedAt:  now,
 			}
 
 			if err := s.matchRepo.UpdateOrCreateMatch(&entity); err != nil {

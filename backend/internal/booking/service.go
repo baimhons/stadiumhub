@@ -2,6 +2,7 @@ package booking
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/baimhons/stadiumhub/internal/booking/api/request"
@@ -9,16 +10,18 @@ import (
 	"github.com/baimhons/stadiumhub/internal/match"
 	"github.com/baimhons/stadiumhub/internal/models"
 	"github.com/baimhons/stadiumhub/internal/seat"
+	"github.com/baimhons/stadiumhub/internal/utils"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type BookingService interface {
 	CreateBooking(userCtx models.UserContext, req request.CreateBookingRequest) (resp *response.BookingResponse, statusCode int, err error)
-	GetBookingByID(id uuid.UUID) (resp *response.BookingResponse, statusCode int, err error)
-	GetAllBookingsByUser(userID uuid.UUID) (resp []response.BookingResponse, statusCode int, err error)
-	CancelBooking(id uuid.UUID) (statusCode int, err error)
-	GetAllBookings() (resp []response.BookingResponse, statusCode int, err error)
-	UpdateBookingStatus(req request.UpdateBookingStatusRequest) (resp *response.BookingResponse, statusCode int, err error)
+	GetBookingByID(id uuid.UUID, userCtx models.UserContext) (resp *response.BookingResponse, statusCode int, err error)
+	GetAllBookingsByUser(userID uuid.UUID, query *utils.PaginationQuery) (resp []response.BookingResponse, statusCode int, err error)
+	CancelBooking(userID uuid.UUID, id uuid.UUID) (statusCode int, err error)
+	GetAllBookings(query *utils.PaginationQuery) (resp []response.BookingResponse, statusCode int, err error)
+	UpdateBookingStatus(userID uuid.UUID, id uuid.UUID) (statusCode int, err error)
 }
 type bookingServiceImpl struct {
 	bookingRepository BookingRepository
@@ -134,26 +137,167 @@ func (bs *bookingServiceImpl) CreateBooking(userCtx models.UserContext, req requ
 }
 
 // get booking by id
-func (bs *bookingServiceImpl) GetBookingByID(id uuid.UUID) (resp *response.BookingResponse, statusCode int, err error) {
-	return nil, 0, nil
+func (bs *bookingServiceImpl) GetBookingByID(id uuid.UUID, userCtx models.UserContext) (resp *response.BookingResponse, statusCode int, err error) {
+	booking, err := bs.bookingRepository.GetByIDWithRelations(id)
+	if err != nil {
+		if err.Error() == "booking not found" {
+			return nil, http.StatusNotFound, err
+		}
+		return nil, http.StatusInternalServerError, err
+	}
+	if booking.UserID != userCtx.ID {
+		return nil, http.StatusForbidden, fmt.Errorf("you are not allowed to access this booking")
+	}
+
+	var seatResp []response.BookingSeatResp
+	for _, bs := range booking.Seats {
+		seatResp = append(seatResp, response.BookingSeatResp{
+			SeatID: bs.SeatID,
+			Price:  bs.Price,
+		})
+	}
+
+	booking.User.Password = ""
+
+	resp = &response.BookingResponse{
+		ID:         booking.ID,
+		UserID:     booking.UserID,
+		User:       booking.User,
+		MatchID:    booking.MatchID,
+		Match:      booking.Match,
+		TotalPrice: booking.TotalPrice,
+		Status:     booking.Status,
+		Seats:      seatResp,
+		CreatedAt:  booking.CreatedAt,
+		UpdatedAt:  booking.UpdatedAt,
+	}
+
+	return resp, http.StatusOK, nil
 }
 
 // get all bookings (user)
-func (bs *bookingServiceImpl) GetAllBookingsByUser(userID uuid.UUID) (resp []response.BookingResponse, statusCode int, err error) {
-	return nil, 0, nil
+func (bs *bookingServiceImpl) GetAllBookingsByUser(userID uuid.UUID, query *utils.PaginationQuery) (resp []response.BookingResponse, statusCode int, err error) {
+	bookings, statusCode, err := bs.bookingRepository.GetBookingsByUserID(userID, query)
+	if err != nil {
+		return nil, statusCode, err
+	}
+	if len(bookings) == 0 {
+		return nil, http.StatusNotFound, errors.New("no bookings found")
+	}
+
+	for _, b := range bookings {
+
+		b.User.Password = ""
+		resp = append(resp, response.BookingResponse{
+			ID:         b.ID,
+			UserID:     b.UserID,
+			User:       b.User,
+			MatchID:    b.MatchID,
+			Match:      b.Match,
+			TotalPrice: b.TotalPrice,
+			Status:     b.Status,
+			CreatedAt:  b.CreatedAt,
+			UpdatedAt:  b.UpdatedAt,
+		})
+	}
+
+	return resp, http.StatusOK, nil
 }
 
-// cancel booking
-func (bs *bookingServiceImpl) CancelBooking(id uuid.UUID) (statusCode int, err error) {
-	return 0, nil
+func (bs *bookingServiceImpl) CancelBooking(userID uuid.UUID, id uuid.UUID) (statusCode int, err error) {
+
+	booking, err := bs.bookingRepository.GetByIDWithRelations(id)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return http.StatusNotFound, errors.New("booking not found")
+		}
+		return http.StatusInternalServerError, err
+	}
+
+	if userID != booking.User.ID {
+		// fmt.Println("userId : ", userID)
+		// fmt.Println("booking user id : ", booking.User.ID)
+		return http.StatusBadRequest, errors.New("booking cannot cancel by another user")
+	}
+
+	if booking.Status == "CANCELED" {
+		return http.StatusBadRequest, errors.New("booking already cancelled")
+	}
+
+	booking.Status = "CANCELED"
+
+	if err := bs.bookingRepository.Update(booking); err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	return http.StatusOK, nil
 }
 
-// get all bookings (admin)
-func (bs *bookingServiceImpl) GetAllBookings() (resp []response.BookingResponse, statusCode int, err error) {
-	return nil, 0, nil
+func (bs *bookingServiceImpl) GetAllBookings(query *utils.PaginationQuery) (resp []response.BookingResponse, statusCode int, err error) {
+	bookings, statusCode, err := bs.bookingRepository.GetAllWithRelations(query)
+	if err != nil {
+		return nil, statusCode, err
+	}
+
+	for _, b := range bookings {
+		br := response.BookingResponse{
+			ID:         b.ID,
+			TotalPrice: b.TotalPrice,
+			Status:     b.Status,
+			CreatedAt:  b.CreatedAt,
+			UpdatedAt:  b.UpdatedAt,
+		}
+
+		if b.User.ID != uuid.Nil {
+			br.User = b.User
+		}
+
+		if b.Match.ID != 0 {
+			br.Match = b.Match
+		}
+
+		for _, bs := range b.Seats {
+			br.Seats = append(br.Seats, response.BookingSeatResp{
+				SeatID: bs.Seat.ID,
+				Price:  bs.Price,
+			})
+		}
+
+		resp = append(resp, br)
+	}
+
+	return resp, http.StatusOK, nil
 }
 
 // update booking status
-func (bs *bookingServiceImpl) UpdateBookingStatus(req request.UpdateBookingStatusRequest) (resp *response.BookingResponse, statusCode int, err error) {
-	return nil, 0, nil
+func (bs *bookingServiceImpl) UpdateBookingStatus(userID uuid.UUID, id uuid.UUID) (statusCode int, err error) {
+	booking, err := bs.bookingRepository.GetByIDWithRelations(id)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return http.StatusNotFound, errors.New("booking not found")
+		}
+		return http.StatusInternalServerError, err
+	}
+
+	if userID != booking.User.ID {
+		// fmt.Println("userId : ", userID)
+		// fmt.Println("booking user id : ", booking.User.ID)
+		return http.StatusBadRequest, errors.New("booking cannot update by another user")
+	}
+
+	if booking.Status == "CANCELED" {
+		return http.StatusBadRequest, errors.New("booking already cancelled")
+	}
+
+	if booking.Status == "PAID" {
+		return http.StatusBadRequest, errors.New("booking already paid")
+	}
+
+	booking.Status = "PAID"
+
+	if err := bs.bookingRepository.Update(booking); err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	return http.StatusOK, nil
 }
