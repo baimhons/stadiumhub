@@ -45,22 +45,34 @@ func (h *matchHandlerImpl) UpdateMatches(c *gin.Context) {
 
 	msg, status, err := h.matchService.UpdateMatches(month, year)
 	if err != nil {
-		c.JSON(status, gin.H{"error": err.Error()})
+		c.JSON(status, utils.ErrorResponse{
+			Message: err.Error(),
+			Error:   err,
+		})
 		return
 	}
-	c.JSON(status, gin.H{"message": msg})
+	c.JSON(status, utils.SuccessResponse{
+		Message: msg,
+		Data:    nil,
+	})
 }
 
 func (h *matchHandlerImpl) GetAllMatches(c *gin.Context) {
 	var query utils.PaginationQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse{
+			Message: err.Error(),
+			Error:   err,
+		})
 		return
 	}
 
 	data, status, err := h.matchService.GetAllMatches(&query)
 	if err != nil {
-		c.JSON(status, gin.H{"error": err.Error()})
+		c.JSON(status, utils.ErrorResponse{
+			Message: err.Error(),
+			Error:   err,
+		})
 		return
 	}
 	c.JSON(status, data)
@@ -69,14 +81,20 @@ func (h *matchHandlerImpl) GetAllMatches(c *gin.Context) {
 func (h *matchHandlerImpl) GetMatchesByTeamID(c *gin.Context) {
 	var query utils.PaginationQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse{
+			Message: err.Error(),
+			Error:   err,
+		})
 		return
 	}
 
 	teamID, _ := strconv.ParseUint(c.Param("teamID"), 10, 64)
 	data, status, err := h.matchService.GetMatchesByTeamID(uint(teamID), &query)
 	if err != nil {
-		c.JSON(status, gin.H{"error": err.Error()})
+		c.JSON(status, utils.ErrorResponse{
+			Message: err.Error(),
+			Error:   err,
+		})
 		return
 	}
 	c.JSON(status, data)
@@ -85,7 +103,10 @@ func (h *matchHandlerImpl) GetMatchesByTeamID(c *gin.Context) {
 func (h *matchHandlerImpl) GetMatchesByDateRange(c *gin.Context) {
 	var query utils.PaginationQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse{
+			Message: err.Error(),
+			Error:   err,
+		})
 		return
 	}
 	startDate := c.Query("startDate")
@@ -93,7 +114,10 @@ func (h *matchHandlerImpl) GetMatchesByDateRange(c *gin.Context) {
 
 	data, status, err := h.matchService.GetMatchesByDateRange(startDate, endDate, &query)
 	if err != nil {
-		c.JSON(status, gin.H{"error": err.Error()})
+		c.JSON(status, utils.ErrorResponse{
+			Message: err.Error(),
+			Error:   err,
+		})
 		return
 	}
 	c.JSON(status, data)

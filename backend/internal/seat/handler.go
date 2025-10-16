@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/baimhons/stadiumhub/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -27,13 +28,19 @@ func (h *seatHandlerImpl) GetAvailableSeats(c *gin.Context) {
 
 	matchID, err := strconv.ParseUint(matchIDStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid match_id"})
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse{
+			Message: "invalid match_id",
+			Error:   nil,
+		})
 		return
 	}
 
 	teamID, err := strconv.Atoi(teamIDStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid team_id"})
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse{
+			Message: "invalid team_id",
+			Error:   err,
+		})
 		return
 	}
 
@@ -41,7 +48,10 @@ func (h *seatHandlerImpl) GetAvailableSeats(c *gin.Context) {
 	if zoneIDStr != "" {
 		z, err := uuid.Parse(zoneIDStr)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid zone_id"})
+			c.JSON(http.StatusBadRequest, utils.ErrorResponse{
+				Message: "invalid zone_id",
+				Error:   err,
+			})
 			return
 		}
 		zoneID = &z
@@ -49,7 +59,10 @@ func (h *seatHandlerImpl) GetAvailableSeats(c *gin.Context) {
 
 	seats, err := h.seatService.GetAvailableSeats(uint(matchID), teamID, zoneID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, utils.ErrorResponse{
+			Message: err.Error(),
+			Error:   err,
+		})
 		return
 	}
 
