@@ -13,7 +13,7 @@ type Middleware struct {
 
 func NewMiddleware(redis utils.RedisClient, jwt utils.JWT, secret string) *Middleware {
 	return &Middleware{
-		AuthMiddleware: middlewareInternal.NewAuthMiddleware(redis, jwt, secret),
+		AuthMiddleware: middlewareInternal.NewAuthMiddleware(redis),
 	}
 }
 

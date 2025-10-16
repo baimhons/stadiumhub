@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/baimhons/stadiumhub/internal"
 	"github.com/baimhons/stadiumhub/internal/models"
 	"github.com/baimhons/stadiumhub/internal/user/api/request"
 	"github.com/baimhons/stadiumhub/internal/user/api/response"
@@ -20,7 +19,7 @@ import (
 type UserService interface {
 	RegisterUser(req request.RegisterUser) (resp utils.SuccessResponse, statusCode int, err error)
 	LoginUser(req request.LoginUser) (resp utils.SuccessResponse, statusCode int, err error)
-	LogoutUser(userCtx models.UserContext) (statusCode int, err error)
+	LogoutUser(userCtx models.UserContext, sessionID string) (int, error)
 	GetUserProfile(userCtx models.UserContext) (resp utils.SuccessResponse, statusCode int, err error)
 	UpdateUser(userCtx models.UserContext, req request.UpdateUser) (resp utils.SuccessResponse, statusCode int, err error)
 }
@@ -89,30 +88,15 @@ func (us *userServiceImpl) LoginUser(req request.LoginUser) (resp utils.SuccessR
 		return resp, http.StatusUnauthorized, errors.New("invalid credentials")
 	}
 
-	timeNow := time.Now()
-	accessTokenExp := timeNow.Add(time.Hour * 1)
-	refreshTokenExp := timeNow.Add(time.Hour * 24)
-	secret := internal.ENV.JWTSecret.Secret
-
-	accessToken, err := utils.NewJWT().Generate(map[string]interface{}{
-		"id":       user.ID,
-		"email":    user.Email,
-		"username": user.Username,
-		"role":     user.Role,
-	}, accessTokenExp.Unix(), secret)
+	// สร้าง session ID แบบ random
+	sessionID, err := utils.GenerateSecureToken(32)
 	if err != nil {
 		return resp, http.StatusInternalServerError, err
 	}
 
-	refreshToken, err := utils.NewJWT().Generate(map[string]interface{}{
-		"id":       user.ID,
-		"email":    user.Email,
-		"username": user.Username,
-		"role":     user.Role,
-	}, refreshTokenExp.Unix(), secret)
-	if err != nil {
-		return resp, http.StatusInternalServerError, err
-	}
+	sessionExp := time.Hour * 24 // session หมดอายุใน 24 ชั่วโมง
+
+	// เก็บ user context ใน Redis โดยใช้ session ID เป็น key
 	userContext := models.UserContext{
 		ID:       user.ID,
 		Username: user.Username,
@@ -122,39 +106,33 @@ func (us *userServiceImpl) LoginUser(req request.LoginUser) (resp utils.SuccessR
 
 	userContextJSON, _ := json.Marshal(userContext)
 
+	// เก็บ session ใน Redis
 	if err := us.redis.Set(
 		context.Background(),
-		fmt.Sprintf("access_token:%s", user.ID),
+		fmt.Sprintf("session:%s", sessionID),
 		userContextJSON,
-		accessTokenExp.Sub(timeNow),
+		sessionExp,
 	); err != nil {
 		return resp, http.StatusInternalServerError, err
 	}
 
-	// ยังคงเก็บ refresh token เป็น string ได้
-	if err := us.redis.Set(
-		context.Background(),
-		fmt.Sprintf("refresh_token:%s", user.ID),
-		refreshToken,
-		refreshTokenExp.Sub(timeNow),
-	); err != nil {
-		return resp, http.StatusInternalServerError, err
-	}
-
+	// return sessionID เพื่อให้ handler ไปตั้งค่า cookie
+	// แต่ไม่ส่งไปที่ client ใน response
 	return utils.SuccessResponse{
 		Message: "User logged in successfully!",
-		Data: response.LoginUserResponse{
-			AccessToken:  accessToken,
-			RefreshToken: refreshToken,
+		Data: map[string]interface{}{
+			"sessionID": sessionID, // ใช้ภายในเท่านั้น
 		},
 	}, http.StatusOK, nil
 }
 
-func (us *userServiceImpl) LogoutUser(userCtx models.UserContext) (statusCode int, err error) {
-	if err := us.redis.Del(context.Background(), fmt.Sprintf("access_token:%s", userCtx.ID)); err != nil {
-		return http.StatusInternalServerError, err
-	}
-	if err := us.redis.Del(context.Background(), fmt.Sprintf("refresh_token:%s", userCtx.ID)); err != nil {
+// LogoutUser - ลบ session (แก้ไข signature)
+func (us *userServiceImpl) LogoutUser(userCtx models.UserContext, sessionID string) (int, error) {
+	err := us.redis.Del(
+		context.Background(),
+		fmt.Sprintf("session:%s", sessionID),
+	)
+	if err != nil {
 		return http.StatusInternalServerError, err
 	}
 	return http.StatusOK, nil

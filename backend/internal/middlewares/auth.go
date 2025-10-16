@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
+	"net/http"
 
 	"github.com/baimhons/stadiumhub/internal/models"
 	"github.com/baimhons/stadiumhub/internal/utils"
@@ -17,53 +17,49 @@ type AuthMiddleware interface {
 }
 
 type AuthMiddlewareImpl struct {
-	redis  utils.RedisClient
-	jwt    utils.JWT
-	secret string
+	redis utils.RedisClient
 }
 
-func NewAuthMiddleware(redis utils.RedisClient, jwt utils.JWT, secret string) *AuthMiddlewareImpl {
-	return &AuthMiddlewareImpl{redis: redis, jwt: jwt, secret: secret}
+func NewAuthMiddleware(redis utils.RedisClient) *AuthMiddlewareImpl {
+	return &AuthMiddlewareImpl{redis: redis}
 }
 
 func (a *AuthMiddlewareImpl) RequireAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if !strings.HasPrefix(authHeader, "Bearer ") {
-			c.AbortWithStatusJSON(401, gin.H{"error": "[jwt] invalid token type"})
-			return
-		}
-
-		token := strings.TrimPrefix(authHeader, "Bearer ")
-
-		var tokenContext models.TokenContext
-		_, err := a.jwt.Parse(token, &tokenContext, a.secret)
+		// อ่าน session ID จาก cookie
+		sessionID, err := c.Cookie("session_id")
 		if err != nil {
-			c.AbortWithStatusJSON(401, gin.H{"error": fmt.Sprintf("[jwt] %v", err)})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, utils.ErrorResponse{
+				Message: "session not found",
+				Error:   err,
+			})
 			return
 		}
 
-		// fmt.Println("[DEBUG] JWT Secret (middleware):", a.secret)
-		// key := fmt.Sprintf("access_token:%s", tokenContext.ID)
-		// fmt.Println("[DEBUG] Extracted UserID:", tokenContext.ID)
-		// fmt.Println("[DEBUG] Redis Key to Check:", key)
-
-		userContextJSON, err := a.redis.Get(context.Background(), fmt.Sprintf("access_token:%s", tokenContext.ID))
+		// ดึง user context จาก Redis
+		userContextJSON, err := a.redis.Get(
+			context.Background(),
+			fmt.Sprintf("session:%s", sessionID),
+		)
 		if err != nil {
 			if err == redisLib.Nil {
-				c.AbortWithStatusJSON(401, gin.H{"error": "[jwt] session not found"})
+				c.AbortWithStatusJSON(http.StatusUnauthorized, utils.ErrorResponse{
+					Message: "session expired or invalid",
+					Error:   err,
+				})
 				return
 			}
-			c.AbortWithStatusJSON(500, gin.H{"error": fmt.Sprintf("[jwt] %v", err)})
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("redis error: %v", err)})
 			return
 		}
 
 		var userContext models.UserContext
 		if err := json.Unmarshal([]byte(userContextJSON), &userContext); err != nil {
-			c.AbortWithStatusJSON(500, gin.H{"error": fmt.Sprintf("[jwt] %v", err)})
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("unmarshal error: %v", err)})
 			return
 		}
 
+		// เก็บ user context ไว้ใน context
 		c.Set("userContext", userContext)
 		c.Next()
 	}

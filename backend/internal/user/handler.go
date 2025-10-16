@@ -5,6 +5,7 @@ import (
 
 	"github.com/baimhons/stadiumhub/internal/models"
 	"github.com/baimhons/stadiumhub/internal/user/api/request"
+	"github.com/baimhons/stadiumhub/internal/user/api/response"
 	"github.com/baimhons/stadiumhub/internal/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -84,7 +85,43 @@ func (h *userHandlerImpl) LoginUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(status, resp)
+	// ดึง session ID จาก response data
+	dataMap, ok := resp.Data.(map[string]interface{})
+	if !ok {
+		c.JSON(http.StatusInternalServerError, utils.ErrorResponse{
+			Message: "invalid response data",
+			Error:   nil,
+		})
+		return
+	}
+
+	sessionID, ok := dataMap["sessionID"].(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, utils.ErrorResponse{
+			Message: "invalid session ID",
+			Error:   nil,
+		})
+		return
+	}
+
+	// ตั้งค่า cookie
+	c.SetCookie(
+		"session_id", // name
+		sessionID,    // value
+		86400,        // maxAge (วินาที) - 24 ชั่วโมง
+		"/",          // path
+		"",           // domain (ว่างไว้ = current domain)
+		true,         // secure (ใช้ HTTPS เท่านั้น)
+		true,         // httpOnly (ป้องกัน XSS)
+	)
+
+	// ส่ง response กลับไปโดยไม่มี session ID
+	c.JSON(status, utils.SuccessResponse{
+		Message: resp.Message,
+		Data: response.LoginUserResponse{
+			Message: "Cookie has been set",
+		},
+	})
 }
 
 func (h *userHandlerImpl) LogoutUser(c *gin.Context) {
@@ -106,7 +143,18 @@ func (h *userHandlerImpl) LogoutUser(c *gin.Context) {
 		return
 	}
 
-	status, err := h.userService.LogoutUser(ctx)
+	// ดึง session ID จาก cookie
+	sessionID, err := c.Cookie("session_id")
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, utils.ErrorResponse{
+			Message: "session not found",
+			Error:   err,
+		})
+		return
+	}
+
+	// ลบ session จาก Redis
+	status, err := h.userService.LogoutUser(ctx, sessionID)
 	if err != nil {
 		c.JSON(status, utils.ErrorResponse{
 			Message: err.Error(),
@@ -115,7 +163,21 @@ func (h *userHandlerImpl) LogoutUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(status, gin.H{"message": "User logged out successfully"})
+	// ลบ cookie
+	c.SetCookie(
+		"session_id",
+		"",
+		-1, // maxAge = -1 จะลบ cookie
+		"/",
+		"",
+		true,
+		true,
+	)
+
+	c.JSON(status, utils.SuccessResponse{
+		Message: "User logged out successfully",
+		Data:    nil,
+	})
 }
 
 func (h *userHandlerImpl) GetUserProfile(c *gin.Context) {

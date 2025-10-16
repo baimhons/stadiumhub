@@ -3,8 +3,7 @@ package response
 import "github.com/google/uuid"
 
 type LoginUserResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	Message string `json:"message,omitempty"`
 }
 
 type UserProfileResponse struct {
