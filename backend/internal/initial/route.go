@@ -3,6 +3,7 @@ package initial
 import (
 	"github.com/baimhons/stadiumhub/internal/booking"
 	"github.com/baimhons/stadiumhub/internal/match"
+	"github.com/baimhons/stadiumhub/internal/payment"
 	"github.com/baimhons/stadiumhub/internal/seat"
 	"github.com/baimhons/stadiumhub/internal/team"
 	"github.com/baimhons/stadiumhub/internal/user"
@@ -17,6 +18,7 @@ type route struct {
 	BookingRoutes *booking.BookingRoutes
 	ZoneRoutes    *zone.ZoneRoutes
 	TeamRoutes    *team.TeamRoutes
+	PaymentRoutes *payment.PaymentRoutes
 }
 
 func NewRoute(
@@ -58,6 +60,12 @@ func NewRoute(
 			apiRoute,
 			handler.TeamHandler,
 		),
+		PaymentRoutes: payment.NewPaymentRoutes(
+			apiRoute,
+			handler.PaymentHandler,
+			validate.PaymentValidate,
+			middleware.AuthMiddleware,
+		),
 	}
 	route.setupRoute()
 }
@@ -69,4 +77,5 @@ func (r *route) setupRoute() {
 	r.BookingRoutes.RegisterRoutes()
 	r.ZoneRoutes.RegisterRoutes()
 	r.TeamRoutes.RegisterRoutes()
+	r.PaymentRoutes.RegisterRoutes()
 }

@@ -4,8 +4,8 @@ var ENV struct {
 	Server      `mapstructure:"server"`
 	Database    `mapstructure:"database"`
 	Redis       `mapstructure:"redis"`
-	JWTSecret   `mapstructure:"jwtsecret"`
 	APIFootball `mapstructure:"apifootball"`
+	Stripe      `mapstructure:"stripe"`
 }
 
 type Server struct {
@@ -27,10 +27,10 @@ type Redis struct {
 	Password string `mapstructure:"password" defaultValue:""`
 }
 
-type JWTSecret struct {
-	Secret string `mapstructure:"jwtsecret" defaultValue:"stadium_hub_secret"`
-}
-
 type APIFootball struct {
 	APIKey string `mapstructure:"apikey" defaultValue:"e1009c5181884003ac55cd624a81502e"`
+}
+
+type Stripe struct {
+	StripeKey string `mapstructure:"stripeKey" defaultValue:"sk_test_51SJdxYBVJneBwH8Vw62Ms5memSg9TXmtovK2ZhGCwkIa8VYRDA3sHyEQRH5g7SNgSMwOkuDNdBjWUeiWAR93XyA000LmowvRrO"`
 }

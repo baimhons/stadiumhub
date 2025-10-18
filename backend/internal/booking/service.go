@@ -86,7 +86,7 @@ func (bs *bookingServiceImpl) CreateBooking(userCtx models.UserContext, req requ
 	newBooking := Booking{
 		UserID:     userCtx.ID,
 		MatchID:    req.MatchID,
-		TotalPrice: int(totalPrice),
+		TotalPrice: totalPrice,
 		Status:     "PENDING",
 	}
 
@@ -101,7 +101,7 @@ func (bs *bookingServiceImpl) CreateBooking(userCtx models.UserContext, req requ
 			BookingID: newBooking.ID,
 			SeatID:    s.ID,
 			SeatNo:    s.SeatNo,
-			Price:     int(seatPrice),
+			Price:     seatPrice,
 		})
 	}
 
@@ -120,7 +120,7 @@ func (bs *bookingServiceImpl) CreateBooking(userCtx models.UserContext, req requ
 		seatResp = append(seatResp, response.BookingSeatResp{
 			SeatID: s.ID,
 			SeatNo: s.SeatNo,
-			Price:  int(seatPrice),
+			Price:  seatPrice,
 		})
 	}
 

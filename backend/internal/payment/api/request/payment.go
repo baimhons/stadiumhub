@@ -1,9 +1,7 @@
 package request
 
-import "github.com/google/uuid"
-
-type PaymentRequest struct {
-	BookingID     uuid.UUID `json:"booking_id" binding:"required,uuid"`
-	PaymentMethod string    `json:"payment_method" binding:"required"`
-	Proof         string    `json:"proof"`
+type PaymentIntentRequest struct {
+	Amount        int64  `json:"amount" validate:"required"`
+	Currency      string `json:"currency" validate:"required"`
+	PaymentMethod string `json:"payment_method" validate:"required"`
 }

@@ -11,7 +11,7 @@ type Middleware struct {
 	AuthMiddleware middlewareInternal.AuthMiddleware
 }
 
-func NewMiddleware(redis utils.RedisClient, jwt utils.JWT, secret string) *Middleware {
+func NewMiddleware(redis utils.RedisClient) *Middleware {
 	return &Middleware{
 		AuthMiddleware: middlewareInternal.NewAuthMiddleware(redis),
 	}

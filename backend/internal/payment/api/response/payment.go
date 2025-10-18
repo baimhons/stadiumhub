@@ -1,11 +1,22 @@
 package response
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type PaymentResponse struct {
-	ID            uuid.UUID `json:"id"`
-	Amount        float64   `json:"amount"`
-	PaymentMethod string    `json:"payment_method"`
-	Status        string    `json:"status"`
-	PaymentAt     int64     `json:"payment_at"`
+	Status     int         `json:"status"`
+	Message    string      `json:"message"`
+	StatusCode int         `json:"status_code"`
+	SessionURL StripeModel `json:"seesion_url"`
+}
+
+type StripeModel struct {
+	UserID     uuid.UUID `json:"user_id"`
+	SessionURL string    `json:"session_url"`
+	SessionID  string    `json:"session_id"`
+	Amount     float32   `json:"amount"`
+	CreatedAt  time.Time `json:"created_at"`
 }

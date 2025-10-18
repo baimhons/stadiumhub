@@ -14,7 +14,7 @@ type BookingResponse struct {
 	User       user.User         `gorm:"foreignKey:UserID"`
 	MatchID    int               `json:"match_id"`
 	Match      match.Match       `gorm:"foreignKey:MatchID"`
-	TotalPrice int               `json:"total_price"`
+	TotalPrice float32           `json:"total_price"`
 	Status     string            `json:"status"`
 	Seats      []BookingSeatResp `json:"seats"`
 	CreatedAt  time.Time         `json:"created_at"`
@@ -24,5 +24,5 @@ type BookingResponse struct {
 type BookingSeatResp struct {
 	SeatID uuid.UUID `json:"seat_id"`
 	SeatNo string    `json:"seat_no"`
-	Price  int       `json:"price"`
+	Price  float32   `json:"price"`
 }

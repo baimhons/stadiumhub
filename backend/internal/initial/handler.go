@@ -3,6 +3,7 @@ package initial
 import (
 	"github.com/baimhons/stadiumhub/internal/booking"
 	"github.com/baimhons/stadiumhub/internal/match"
+	"github.com/baimhons/stadiumhub/internal/payment"
 	"github.com/baimhons/stadiumhub/internal/seat"
 	"github.com/baimhons/stadiumhub/internal/team"
 	"github.com/baimhons/stadiumhub/internal/user"
@@ -16,6 +17,7 @@ type Handler struct {
 	BookingHandler booking.BookingHandler
 	ZoneHandler    zone.ZoneHandler
 	TeamHandler    team.TeamHandler
+	PaymentHandler payment.PaymentHandler
 }
 
 func NewHandler(service *Service) *Handler {
@@ -26,5 +28,6 @@ func NewHandler(service *Service) *Handler {
 		BookingHandler: booking.NewBookingHandler(service.BookingService),
 		ZoneHandler:    zone.NewZoneHandler(service.ZoneService),
 		TeamHandler:    team.NewTeamHandler(service.TeamService),
+		PaymentHandler: payment.NewPaymentHandler(service.PaymentService),
 	}
 }

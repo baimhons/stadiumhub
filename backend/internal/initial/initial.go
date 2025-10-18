@@ -35,7 +35,7 @@ func InitializeApp() *App {
 	handler := NewHandler(service)
 	validate := NewValidate()
 
-	middleware := NewMiddleware(clientConfig.Redis, clientConfig.JWT, internal.ENV.JWTSecret.Secret)
+	middleware := NewMiddleware(clientConfig.Redis)
 
 	NewRoute(
 		ginEngine,

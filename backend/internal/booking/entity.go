@@ -22,7 +22,7 @@ type Booking struct {
 	User       user.User     `gorm:"foreignKey:UserID"`
 	MatchID    int           `gorm:"not null"`
 	Match      match.Match   `gorm:"foreignKey:MatchID"`
-	TotalPrice int           `gorm:"not null"`
+	TotalPrice float32       `gorm:"not null"`
 	Status     string        `gorm:"type:varchar(20);not null"`
 	Seats      []BookingSeat `gorm:"foreignKey:BookingID"`
 }
@@ -34,5 +34,5 @@ type BookingSeat struct {
 	SeatID    uuid.UUID `gorm:"type:char(36);not null"`
 	SeatNo    string    `gorm:"type:char(12);not null"`
 	Seat      seat.Seat `gorm:"foreignKey:SeatID"`
-	Price     int       `gorm:"not null"`
+	Price     float32   `gorm:"not null"`
 }
