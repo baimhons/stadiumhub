@@ -2,6 +2,7 @@ package booking
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/baimhons/stadiumhub/internal/booking/api/request"
 	"github.com/baimhons/stadiumhub/internal/models"
@@ -11,6 +12,7 @@ import (
 )
 
 type BookingHandler interface {
+	GetRevenueByYear(c *gin.Context)
 	CreateBooking(c *gin.Context)
 	GetBookingByID(c *gin.Context)
 	GetAllBookingsByUser(c *gin.Context)
@@ -272,5 +274,36 @@ func (h *bookingHandlerImpl) UpdateBookingStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.SuccessResponse{
 		Message: "booking update successfully",
 		Data:    nil,
+	})
+}
+
+func (h *bookingHandlerImpl) GetRevenueByYear(c *gin.Context) {
+	yearStr := c.Query("year")
+	if yearStr == "" {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse{
+			Message: "Year is required",
+		})
+		return
+	}
+
+	year, err := strconv.Atoi(yearStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse{
+			Message: "Invalid year",
+		})
+		return
+	}
+
+	revenueMap, err := h.bookingService.GetRevenueByYear(year)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.ErrorResponse{
+			Message: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.SuccessResponse{
+		Message: "Revenue by month successfully",
+		Data:    revenueMap,
 	})
 }

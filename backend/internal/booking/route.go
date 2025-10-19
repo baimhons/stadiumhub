@@ -36,11 +36,11 @@ func NewBookingRoutes(
 
 func (r *BookingRoutes) RegisterRoutes() {
 
-	r.group.POST("/create", r.authMiddleware.RequireAuth(), r.bookingValidate.ValidateSeatQuantity, r.bookingHandler.CreateBooking)
+	r.group.GET("/revenue", r.authMiddleware.RequireAuth(), r.userValidate.ValidateRoleAdmin, r.bookingHandler.GetRevenueByYear)
 	r.group.GET("/:id", r.authMiddleware.RequireAuth(), r.bookingHandler.GetBookingByID)
 	r.group.GET("/history", r.authMiddleware.RequireAuth(), r.bookingHandler.GetAllBookingsByUser)
-	r.group.POST("/cancel/:id", r.authMiddleware.RequireAuth(), r.bookingHandler.CancelBooking)
 	r.group.GET("/all", r.authMiddleware.RequireAuth(), r.userValidate.ValidateRoleAdmin, r.bookingHandler.GetAllBookings)
+	r.group.POST("/create", r.authMiddleware.RequireAuth(), r.bookingValidate.ValidateSeatQuantity, r.bookingHandler.CreateBooking)
 	r.group.POST("/update-status/:id", r.authMiddleware.RequireAuth(), r.bookingHandler.UpdateBookingStatus)
-
+	r.group.POST("/cancel/:id", r.authMiddleware.RequireAuth(), r.bookingHandler.CancelBooking)
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/baimhons/stadiumhub/internal/utils"
 	"github.com/google/uuid"
@@ -15,6 +16,7 @@ type BookingRepository interface {
 	GetByIDWithRelations(id uuid.UUID) (*Booking, error)
 	GetBookingsByUserID(userID uuid.UUID, query *utils.PaginationQuery) ([]Booking, int, error)
 	GetAllWithRelations(pagination *utils.PaginationQuery) ([]Booking, int, error)
+	GetRevenueByYear(year int) (map[string]float32, error)
 }
 
 type bookingRepositoryImpl struct {
@@ -114,4 +116,34 @@ func (br *bookingRepositoryImpl) GetAllWithRelations(pagination *utils.Paginatio
 	}
 
 	return bookings, http.StatusOK, nil
+}
+
+func (br *bookingRepositoryImpl) GetRevenueByYear(year int) (map[string]float32, error) {
+	revenueMap := make(map[string]float32)
+	months := []string{
+		"January", "February", "March", "April", "May", "June",
+		"July", "August", "September", "October", "November", "December",
+	}
+
+	for i, monthName := range months {
+		startDate := time.Date(year, time.Month(i+1), 1, 0, 0, 0, 0, time.UTC)
+		endDate := startDate.AddDate(0, 1, 0)
+
+		var total *float32
+		query := br.db.Model(&Booking{}).
+			Where("status = ?", "PAID").
+			Where("created_at >= ? AND created_at < ?", startDate, endDate)
+
+		if err := query.Select("SUM(total_price)").Scan(&total).Error; err != nil {
+			return nil, err
+		}
+
+		if total != nil {
+			revenueMap[monthName] = *total
+		} else {
+			revenueMap[monthName] = 0
+		}
+	}
+
+	return revenueMap, nil
 }
