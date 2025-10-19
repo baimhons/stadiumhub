@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/baimhons/stadiumhub/internal/booking/api/response"
 	"github.com/baimhons/stadiumhub/internal/utils"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -16,7 +17,7 @@ type BookingRepository interface {
 	GetByIDWithRelations(id uuid.UUID) (*Booking, error)
 	GetBookingsByUserID(userID uuid.UUID, query *utils.PaginationQuery) ([]Booking, int, error)
 	GetAllWithRelations(pagination *utils.PaginationQuery) ([]Booking, int, error)
-	GetRevenueByYear(year int) (map[string]float32, error)
+	GetRevenueByYear(year int) ([]response.MonthRevenue, error)
 }
 
 type bookingRepositoryImpl struct {
@@ -118,12 +119,13 @@ func (br *bookingRepositoryImpl) GetAllWithRelations(pagination *utils.Paginatio
 	return bookings, http.StatusOK, nil
 }
 
-func (br *bookingRepositoryImpl) GetRevenueByYear(year int) (map[string]float32, error) {
-	revenueMap := make(map[string]float32)
+func (br *bookingRepositoryImpl) GetRevenueByYear(year int) ([]response.MonthRevenue, error) {
 	months := []string{
 		"January", "February", "March", "April", "May", "June",
 		"July", "August", "September", "October", "November", "December",
 	}
+
+	var result []response.MonthRevenue
 
 	for i, monthName := range months {
 		startDate := time.Date(year, time.Month(i+1), 1, 0, 0, 0, 0, time.UTC)
@@ -138,12 +140,16 @@ func (br *bookingRepositoryImpl) GetRevenueByYear(year int) (map[string]float32,
 			return nil, err
 		}
 
+		value := float32(0)
 		if total != nil {
-			revenueMap[monthName] = *total
-		} else {
-			revenueMap[monthName] = 0
+			value = *total
 		}
+
+		result = append(result, response.MonthRevenue{
+			Month:   monthName,
+			Revenue: value,
+		})
 	}
 
-	return revenueMap, nil
+	return result, nil
 }

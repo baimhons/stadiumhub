@@ -22,7 +22,7 @@ type BookingService interface {
 	CancelBooking(userID uuid.UUID, id uuid.UUID) (statusCode int, err error)
 	GetAllBookings(query *utils.PaginationQuery) (resp []response.BookingResponse, statusCode int, err error)
 	UpdateBookingStatus(userID uuid.UUID, id uuid.UUID) (statusCode int, err error)
-	GetRevenueByYear(year int) (map[string]float32, error)
+	GetRevenueByYear(year int) (resp []response.MonthRevenue, err error)
 }
 type bookingServiceImpl struct {
 	bookingRepository BookingRepository
@@ -309,6 +309,6 @@ func (bs *bookingServiceImpl) UpdateBookingStatus(userID uuid.UUID, id uuid.UUID
 	return http.StatusOK, nil
 }
 
-func (bs *bookingServiceImpl) GetRevenueByYear(year int) (map[string]float32, error) {
+func (bs *bookingServiceImpl) GetRevenueByYear(year int) (resp []response.MonthRevenue, err error) {
 	return bs.bookingRepository.GetRevenueByYear(year)
 }

@@ -294,7 +294,7 @@ func (h *bookingHandlerImpl) GetRevenueByYear(c *gin.Context) {
 		return
 	}
 
-	revenueMap, err := h.bookingService.GetRevenueByYear(year)
+	revenueList, err := h.bookingService.GetRevenueByYear(year)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, utils.ErrorResponse{
 			Message: err.Error(),
@@ -304,6 +304,6 @@ func (h *bookingHandlerImpl) GetRevenueByYear(c *gin.Context) {
 
 	c.JSON(http.StatusOK, utils.SuccessResponse{
 		Message: "Revenue by month successfully",
-		Data:    revenueMap,
+		Data:    revenueList,
 	})
 }

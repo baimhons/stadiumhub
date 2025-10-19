@@ -26,3 +26,8 @@ type BookingSeatResp struct {
 	SeatNo string    `json:"seat_no"`
 	Price  float32   `json:"price"`
 }
+
+type MonthRevenue struct {
+	Month   string  `json:"month"`
+	Revenue float32 `json:"revenue"`
+}
