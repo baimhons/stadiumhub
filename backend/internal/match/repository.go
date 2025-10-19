@@ -45,7 +45,10 @@ func (mr *matchRepositoryImpl) UpdateOrCreateMatch(entity *Match) error {
 
 func (mr *matchRepositoryImpl) GetAllMatches(query *utils.PaginationQuery) ([]Match, int, error) {
 	var matches []Match
-	tx := mr.db.Model(&Match{}).Preload("HomeTeam").Preload("AwayTeam")
+	tx := mr.db.Model(&Match{}).
+		Preload("HomeTeam").
+		Preload("AwayTeam").
+		Where("status IN ?", []string{"TIMED", "SCHEDULED"})
 
 	if query.Page != nil && query.PageSize != nil {
 		offset := (*query.Page - 1) * (*query.PageSize)
