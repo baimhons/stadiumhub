@@ -121,12 +121,11 @@ func (us *userServiceImpl) LoginUser(req request.LoginUser) (resp utils.SuccessR
 	return utils.SuccessResponse{
 		Message: "User logged in successfully!",
 		Data: map[string]interface{}{
-			"sessionID": sessionID, // ใช้ภายในเท่านั้น
+			"sessionID": sessionID,
 		},
 	}, http.StatusOK, nil
 }
 
-// LogoutUser - ลบ session (แก้ไข signature)
 func (us *userServiceImpl) LogoutUser(userCtx models.UserContext, sessionID string) (int, error) {
 	err := us.redis.Del(
 		context.Background(),

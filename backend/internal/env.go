@@ -6,6 +6,7 @@ var ENV struct {
 	Redis       `mapstructure:"redis"`
 	APIFootball `mapstructure:"apifootball"`
 	Stripe      `mapstructure:"stripe"`
+	AdminData   `mapstructure:"adminData"`
 }
 
 type Server struct {
@@ -33,4 +34,12 @@ type APIFootball struct {
 
 type Stripe struct {
 	StripeKey string `mapstructure:"stripeKey" defaultValue:"sk_test_51SJdxYBVJneBwH8Vw62Ms5memSg9TXmtovK2ZhGCwkIa8VYRDA3sHyEQRH5g7SNgSMwOkuDNdBjWUeiWAR93XyA000LmowvRrO"`
+}
+
+type AdminData struct {
+	Username    string `mapstructure:"username" defaultValue:"adminStadiumHub"`
+	Email       string `mapstructure:"email" defaultValue:"adminStadiumHub05@gmail.com"`
+	Password    string `mapstructure:"password" defaultValue:"4Dm1n3_7-0"`
+	PhoneNumber string `mapstructure:"phoneNumber" defaultValue:"012345678"`
+	Role        string `mapstructure:"role" defaultValue:"admin"`
 }
