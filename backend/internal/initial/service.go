@@ -42,6 +42,8 @@ func NewService(repo *Repository, redis utils.RedisClient) *Service {
 		TeamService: team.NewTeamService(
 			repo.TeamRepository,
 		),
-		PaymentService: payment.NewPaymentService(),
+		PaymentService: payment.NewPaymentService(
+			repo.BookingRepository,
+		),
 	}
 }

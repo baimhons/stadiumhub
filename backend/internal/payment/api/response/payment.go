@@ -9,6 +9,7 @@ import (
 type PaymentResponse struct {
 	Status     int         `json:"status"`
 	Message    string      `json:"message"`
+	BookingID  uuid.UUID   `json:"booking_id"`
 	StatusCode int         `json:"status_code"`
 	SessionURL StripeModel `json:"seesion_url"`
 }

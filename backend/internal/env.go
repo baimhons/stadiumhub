@@ -13,7 +13,7 @@ type Server struct {
 }
 
 type Database struct {
-	Host     string `mapstructure:"host" defaultValue:"localhost"`
+	Host     string `mapstructure:"host" defaultValue:"mysql"`
 	Port     int    `mapstructure:"port" defaultValue:"3306"`
 	User     string `mapstructure:"user" defaultValue:"stadiumhubuser"`
 	Password string `mapstructure:"password" defaultValue:"root"`
@@ -22,7 +22,7 @@ type Database struct {
 }
 
 type Redis struct {
-	Host     string `mapstructure:"host" defaultValue:"localhost"`
+	Host     string `mapstructure:"host" defaultValue:"redis"`
 	Port     int    `mapstructure:"port" defaultValue:"6379"`
 	Password string `mapstructure:"password" defaultValue:""`
 }

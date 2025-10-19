@@ -64,6 +64,8 @@ func ConnectMySQLDatabase(
 		database,
 	)
 
+	fmt.Println("Connecting to DB:", internal.ENV.Database.Host, internal.ENV.Database.Port)
+
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})

@@ -58,7 +58,7 @@ func (h *paymentHandlerImpl) CreateCheckoutSession(c *gin.Context) {
 		})
 		return
 	}
-	resp, err := h.paymentService.StripeSession(userCtx.ID, req.Amount)
+	resp, err := h.paymentService.StripeSession(userCtx.ID, req.BookingID, req.Amount)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, utils.ErrorResponse{
 			Message: err.Error(),
