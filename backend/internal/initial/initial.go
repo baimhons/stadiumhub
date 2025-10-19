@@ -46,6 +46,8 @@ func InitializeApp() *App {
 
 	go worker.NewMatchWorker(service.MatchService).Start()
 
+	go worker.NewBookingWorker(service.BookingService).Start()
+
 	return &App{
 		App:          ginEngine,
 		ClientConfig: clientConfig,

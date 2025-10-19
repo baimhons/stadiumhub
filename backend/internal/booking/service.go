@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/baimhons/stadiumhub/internal/booking/api/request"
 	"github.com/baimhons/stadiumhub/internal/booking/api/response"
@@ -23,6 +24,7 @@ type BookingService interface {
 	GetAllBookings(query *utils.PaginationQuery) (resp []response.BookingResponse, statusCode int, err error)
 	UpdateBookingStatus(userID uuid.UUID, id uuid.UUID) (statusCode int, err error)
 	GetRevenueByYear(year int) (resp []response.MonthRevenue, err error)
+	CancelExpiredBookings(expireDuration time.Duration) (rows int, err error)
 }
 type bookingServiceImpl struct {
 	bookingRepository BookingRepository
@@ -311,4 +313,28 @@ func (bs *bookingServiceImpl) UpdateBookingStatus(userID uuid.UUID, id uuid.UUID
 
 func (bs *bookingServiceImpl) GetRevenueByYear(year int) (resp []response.MonthRevenue, err error) {
 	return bs.bookingRepository.GetRevenueByYear(year)
+}
+
+func (bs *bookingServiceImpl) CancelExpiredBookings(expireDuration time.Duration) (rows int, err error) {
+	expireTime := time.Now().Add(-expireDuration)
+
+	tx := bs.bookingRepository.Begin()
+	if tx.Error != nil {
+		return 0, tx.Error
+	}
+
+	result := tx.Model(&Booking{}).
+		Where("status = ? AND created_at < ?", "PENDING", expireTime).
+		Update("status", "CANCELED")
+
+	if result.Error != nil {
+		tx.Rollback()
+		return 0, result.Error
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return 0, err
+	}
+
+	return int(result.RowsAffected), nil
 }
