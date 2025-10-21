@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Football Matches & Teams</title>
+  <link rel="stylesheet" href="../../style/styles_match.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="main-nav">
+      <h1 id="site-title">Football Matches</h1>
+      <button class="menu-toggle" aria-label="Toggle menu">☰</button>
+    </nav>
+  </header>
+
+  <main class="main-content">
+    <!-- Teams Section -->
+    <section class="teams-section">
+      <h2 class="section-title">Select Team</h2>
+      <div class="search-box">
+        <input type="text" id="team-search" placeholder="Search teams..." aria-label="Search teams">
+      </div>
+      <div id="teams-container" class="teams-grid" data-loaded="false">
+        <div class="loading-spinner">Loading teams...</div>
+      </div>
+    </section>
+
+    <!-- Matches Section -->
+    <section class="matches-section">
+      <h2 class="section-title">Upcoming Matches</h2>
+      <div class="filter-controls">
+        <button class="btn-filter active" data-filter="all">All Matches</button>
+        <button id="refresh-btn" class="btn-refresh">Refresh</button>
+      </div>
+      <div id="matches-container" class="matches-list">
+        <div class="loading-spinner">Loading matches...</div>
+      </div>
+      <div class="pagination">
+        <button id="prev-page" class="btn-page" disabled>← Previous</button>
+        <span id="page-info" class="page-info">Page 1</span>
+        <button id="next-page" class="btn-page">Next →</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 2025 Football Matches. All rights reserved.</p>
+  </footer>
+
+  <script>
+        // DOM Elements
+          const siteTitleEl = document.getElementById('site-title');
+          const teamSearchEl = document.getElementById('team-search');
+          const teamsContainerEl = document.getElementById('teams-container');
+          const matchesContainerEl = document.getElementById('matches-container');
+          const refreshBtn = document.getElementById('refresh-btn');
+          const prevPageBtn = document.getElementById('prev-page');
+          const nextPageBtn = document.getElementById('next-page');
+          const pageInfoEl = document.getElementById('page-info');
+
+          // State
+          let currentPage = 0;
+          let selectedTeamId = null;
+          let allTeams = [];
+
+          const API_BASE = 'http://localhost:8080/api/v1';
+
+          // Fetch Teams
+          async function fetchTeams() {
+            try {
+              teamsContainerEl.innerHTML = `<div class="loading-spinner">Loading teams...</div>`;
+              
+              const res = await fetch(`${API_BASE}/team/`, { 
+                method: "GET",
+                credentials: "include",
+              });
+
+              if (!res.ok) {
+                const text = await res.text();
+                throw new Error(`HTTP ${res.status}: ${text}`);
+              }
+              
+              const data = await res.json();
+              console.log('Teams data:', data);
+
+              allTeams = data.data || [];
+              displayTeams(allTeams);
+              teamsContainerEl.setAttribute('data-loaded', 'true');
+            } catch (err) {
+              console.error('Error fetching teams:', err);
+              teamsContainerEl.innerHTML = `<p class="error-message">Failed to load teams: ${err.message}</p>`;
+            }
+          }
+
+          //Fetch Matches
+          async function fetchMatches(page = 0, teamId = null) {
+            try {
+              matchesContainerEl.innerHTML = `<div class="loading-spinner">Loading matches...</div>`;
+              
+              let url;
+              if (teamId) {
+                url = `${API_BASE}/matches/team/${teamId}?page=${page}&page_size=10&sort=utc_date&order=asc`;
+              } else {
+                url = `${API_BASE}/matches/?page=${page}&page_size=10&sort=utc_date&order=asc`;
+              }
+              
+              console.log('Fetching matches from:', url); // Debug
+
+              const res = await fetch(url, {
+                method: "GET",
+                credentials: "include"
+              });
+              
+              if (!res.ok) {
+                const text = await res.text();
+                throw new Error(`HTTP ${res.status}: ${text}`);
+              }
+              
+              const data = await res.json();
+              console.log('Matches data:', data); // Debug
+
+              // รองรับหลาย format response
+              let matches = [];
+              if (Array.isArray(data)) {
+                matches = data;
+              } else if (data.data) {
+                matches = Array.isArray(data.data) ? data.data : (data.data.matches || []);
+              }
+
+              console.log('Matches count:', matches.length); // Debug
+              displayMatches(matches);
+              updatePagination(page);
+            } catch (err) {
+              console.error('Error fetching matches:', err);
+              matchesContainerEl.innerHTML = `<p class="error-message">Failed to load matches: ${err.message}</p>`;
+            }
+          }
+
+          //Display Teams
+          function displayTeams(teams) {
+            if (!teams || teams.length === 0) {
+              teamsContainerEl.innerHTML = `<p class="no-data">No teams available</p>`;
+              return;
+            }
+
+            teamsContainerEl.innerHTML = '';
+            teams.forEach(team => {
+              const card = document.createElement('div');
+              card.className = 'team-card';
+              card.dataset.teamId = team.ID;
+
+              card.innerHTML = `
+                <div class="team-badge">${team.TLA || '-'}</div>
+                <h3 class="team-name">${team.ShortName || team.Name}</h3>
+                <p class="team-venue">${team.Venue || 'Unknown Venue'}</p>
+              `;
+
+              card.addEventListener('click', () => selectTeam(team.ID, team.ShortName || team.Name, card));
+              teamsContainerEl.appendChild(card);
+            });
+          }
+
+          //Display Matches
+          function displayMatches(matches) {
+            if (!matches || matches.length === 0) {
+              matchesContainerEl.innerHTML = `<p class="no-data">No matches found</p>`;
+              return;
+            }
+
+            matchesContainerEl.innerHTML = '';
+            matches.forEach(match => {
+              const date = new Date(match.UTCDate || match.utc_date || match.date);
+              const formattedDate = date.toLocaleString('en-EN', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              });
+
+              const card = document.createElement('article');
+              card.className = 'match-card';
+              card.setAttribute('data-status', match.Status || 'TIMED');
+              
+              card.innerHTML = `
+                <div class="match-date">${formattedDate}</div>
+                <div class="match-teams">
+                  <div class="team home-team">
+                    <span class="team-badge-small">${match.HomeTeam?.TLA || '-'}</span>
+                    <span class="team-name-small">${match.HomeTeam?.ShortName || 'Unknown'}</span>
+                  </div>
+                  <div class="match-vs">VS</div>
+                  <div class="team away-team">
+                    <span class="team-badge-small">${match.AwayTeam?.TLA || '-'}</span>
+                    <span class="team-name-small">${match.AwayTeam?.ShortName || 'Unknown'}</span>
+                  </div>
+                </div>
+                <div class="match-venue">${match.Venue || 'TBA'}</div>
+                <div class="match-status status-${(match.Status || 'SCHEDULED').toLowerCase()}">
+                  ${match.Status || 'SCHEDULED'}
+                </div>
+              `;
+              matchesContainerEl.appendChild(card);
+            });
+          }
+
+          // Select Team
+          function selectTeam(teamId, teamName, element) {
+            document.querySelectorAll('.team-card').forEach(c => c.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedTeamId = teamId;
+            currentPage = 0; // Reset page
+            siteTitleEl.textContent = `${teamName} Matches`;
+            fetchMatches(0, teamId);
+          }
+
+          //Pagination
+          function updatePagination(page) {
+            currentPage = page;
+            pageInfoEl.textContent = `Page ${page + 1}`;
+            prevPageBtn.disabled = page === 0;
+          }
+
+          //Search Teams
+          teamSearchEl.addEventListener('input', e => {
+            const term = e.target.value.toLowerCase();
+            
+            if (!term) {
+              displayTeams(allTeams);
+              return;
+            }
+            
+            const filtered = allTeams.filter(t =>
+              (t.Name || '').toLowerCase().includes(term) ||
+              (t.ShortName || '').toLowerCase().includes(term) ||
+              (t.TLA || '').toLowerCase().includes(term)
+            );
+            displayTeams(filtered);
+          });
+
+          //Pagination controls
+          prevPageBtn.addEventListener('click', () => {
+            if (currentPage > 0) {
+              fetchMatches(currentPage - 1, selectedTeamId);
+            }
+          });
+          
+          nextPageBtn.addEventListener('click', () => {
+            fetchMatches(currentPage + 1, selectedTeamId);
+          });
+
+          // Refresh
+          refreshBtn.addEventListener('click', async function () {
+            this.classList.add('spinning');
+            try {
+              await fetchMatches(currentPage, selectedTeamId);
+            } finally {
+              setTimeout(() => this.classList.remove('spinning'), 500);
+            }
+          });
+
+          //Filter (All / Today)
+          document.querySelectorAll('.btn-filter').forEach(btn => {
+            btn.addEventListener('click', function () {
+              document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
+              this.classList.add('active');
+              
+              const filter = this.dataset.filter;
+              if (filter === 'today') {
+                filterTodayMatches();
+              } else {
+                currentPage = 0;
+                fetchMatches(0, selectedTeamId);
+              }
+            });
+          });
+
+
+          //Initialize
+          document.addEventListener('DOMContentLoaded', () => {
+            fetchTeams();
+            fetchMatches(0);
+          });
+  </script>
+</body>
+</html>

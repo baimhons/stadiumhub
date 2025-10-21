@@ -40,46 +40,68 @@
   </div>
 
   <script>
-    const form = document.getElementById('loginForm');
-    const result = document.getElementById('result');
-    const submitBtn = document.getElementById('submitBtn');
+  const form = document.getElementById('loginForm');
+  const result = document.getElementById('result');
+  const submitBtn = document.getElementById('submitBtn');
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      submitBtn.disabled = true;
-      result.textContent = 'กำลังส่ง...';
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    result.textContent = 'กำลังเข้าสู่ระบบ...';
 
-      const payload = {
-        username_or_email: document.getElementById('username_or_email').value.trim(),
-        password: document.getElementById('password').value
-      };
+    const payload = {
+      username_or_email: document.getElementById('username_or_email').value.trim(),
+      password: document.getElementById('password').value
+    };
 
-      try {
-       const resp = await fetch('http://localhost:8080/api/v1/user/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-            credentials: 'include' // ✅ สำคัญ! เพื่อให้ cookie ถูกส่ง/รับ
-            });
+    try {
+      // 1️⃣ Login
+      const loginResp = await fetch('http://localhost:8080/api/v1/user/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        credentials: 'include' // ✅ สำคัญมากเพื่อให้ browser เก็บ session cookie
+      });
 
-       
-
-        const text = await resp.text();
-        // พยายามแปลงเป็น JSON ถ้าเป็นไปได้
-        let display;
-        try {
-          display = JSON.stringify(JSON.parse(text), null, 2);
-        } catch (err) {
-          display = text;
-        }
-
-        result.textContent = `HTTP ${resp.status} ${resp.statusText}\n\n${display}`;
-      } catch (err) {
-        result.textContent = 'เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + err.message;
-      } finally {
+      if (!loginResp.ok) {
+        const errText = await loginResp.text();
+        result.textContent = `เข้าสู่ระบบไม่สำเร็จ: ${loginResp.status}\n\n${errText}`;
         submitBtn.disabled = false;
+        return;
       }
-    });
-  </script>
+
+      // 2️⃣ ตรวจสอบ profile ด้วย cookie ที่ได้มา
+      const profileResp = await fetch('http://localhost:8080/api/v1/user/profile', {
+        method: 'GET',
+        credentials: 'include' // ✅ ส่ง cookie ไปด้วย
+      });
+
+      const profileData = await profileResp.json();
+      console.log('PROFILE:', profileData);
+
+      // แสดงผลลัพธ์ไว้ก่อน (debug)
+      result.textContent = JSON.stringify(profileData, null, 2);
+
+      // 3️⃣ ตรวจสอบ role แล้ว redirect
+      if (profileResp.ok && profileData?.data) {
+        const user = profileData.data;
+
+        if (user.role === 'admin' || user.is_admin === true) {
+          window.location.href = '../admin/admin.html';
+        } else {
+          window.location.href = '../match/match.html';
+        }
+      } else {
+        result.textContent = 'ไม่สามารถดึงข้อมูลผู้ใช้จาก session ได้';
+      }
+
+    } catch (err) {
+      result.textContent = 'เกิดข้อผิดพลาด: ' + err.message;
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+</script>
+
 </body>
 </html>
