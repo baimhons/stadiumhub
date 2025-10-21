@@ -31,11 +31,11 @@ func InitializeApp() *App {
 	SetupMiddleware(ginEngine)
 
 	repository := NewRepository(clientConfig)
-	service := NewService(repository, clientConfig.Redis)
+	service := NewService(repository)
 	handler := NewHandler(service)
 	validate := NewValidate()
 
-	middleware := NewMiddleware(clientConfig.Redis)
+	middleware := NewMiddleware()
 
 	NewRoute(
 		ginEngine,

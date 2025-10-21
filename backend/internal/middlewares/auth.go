@@ -1,32 +1,58 @@
 package middlewares
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
+	"time"
 
 	"github.com/baimhons/stadiumhub/internal/models"
 	"github.com/baimhons/stadiumhub/internal/utils"
+
 	"github.com/gin-gonic/gin"
-	redisLib "github.com/redis/go-redis/v9"
 )
 
-type AuthMiddleware interface {
-	RequireAuth() gin.HandlerFunc
+// ---- In-memory session store ----
+var (
+	sessionStore = make(map[string]string)
+	sessionMutex sync.RWMutex
+)
+
+// ฟังก์ชันช่วย set/get session
+func SetSession(sessionID string, userCtx models.UserContext, exp time.Duration) {
+	userCtxJSON, _ := json.Marshal(userCtx)
+	sessionMutex.Lock()
+	sessionStore[sessionID] = string(userCtxJSON)
+	sessionMutex.Unlock()
+
+	// ตั้งเวลาหมดอายุ
+	go func() {
+		time.Sleep(exp)
+		sessionMutex.Lock()
+		delete(sessionStore, sessionID)
+		sessionMutex.Unlock()
+	}()
 }
 
-type AuthMiddlewareImpl struct {
-	redis utils.RedisClient
+func getSession(sessionID string) (string, bool) {
+	sessionMutex.RLock()
+	defer sessionMutex.RUnlock()
+	data, ok := sessionStore[sessionID]
+	return data, ok
 }
 
-func NewAuthMiddleware(redis utils.RedisClient) *AuthMiddlewareImpl {
-	return &AuthMiddlewareImpl{redis: redis}
+func DeleteSession(sessionID string) {
+	sessionMutex.Lock()
+	delete(sessionStore, sessionID)
+	sessionMutex.Unlock()
 }
+
+// ---- Middleware RequireAuth ----
+type AuthMiddlewareImpl struct{}
 
 func (a *AuthMiddlewareImpl) RequireAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// อ่าน session ID จาก cookie
 		sessionID, err := c.Cookie("session_id")
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, utils.ErrorResponse{
@@ -36,20 +62,13 @@ func (a *AuthMiddlewareImpl) RequireAuth() gin.HandlerFunc {
 			return
 		}
 
-		// ดึง user context จาก Redis
-		userContextJSON, err := a.redis.Get(
-			context.Background(),
-			fmt.Sprintf("session:%s", sessionID),
-		)
-		if err != nil {
-			if err == redisLib.Nil {
-				c.AbortWithStatusJSON(http.StatusUnauthorized, utils.ErrorResponse{
-					Message: "session expired or invalid",
-					Error:   err,
-				})
-				return
-			}
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("redis error: %v", err)})
+		// ดึงข้อมูลจาก in-memory cache
+		userContextJSON, ok := getSession(sessionID)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, utils.ErrorResponse{
+				Message: "session expired or invalid",
+				Error:   fmt.Errorf("session not found in memory"),
+			})
 			return
 		}
 
@@ -59,7 +78,6 @@ func (a *AuthMiddlewareImpl) RequireAuth() gin.HandlerFunc {
 			return
 		}
 
-		// เก็บ user context ไว้ใน context
 		c.Set("userContext", userContext)
 		c.Next()
 	}

@@ -18,12 +18,13 @@ import (
 	"gorm.io/gorm/logger"
 )
 
+// ลบ Redis ออกจาก struct
 type clientConfig struct {
-	DB    *gorm.DB
-	Redis utils.RedisClient
-	JWT   utils.JWT
+	DB  *gorm.DB
+	JWT utils.JWT
 }
 
+// ลบการเชื่อมต่อ Redis ออก
 func newClientConfig() *clientConfig {
 	db := ConnectMySQLDatabase(
 		internal.ENV.Database.Host,
@@ -33,20 +34,11 @@ func newClientConfig() *clientConfig {
 		internal.ENV.Database.Name,
 	)
 
-	redis := utils.ConnectRedis(
-		internal.ENV.Redis.Host,
-		internal.ENV.Redis.Port,
-		internal.ENV.Redis.Password,
-	)
-
 	jwt := utils.NewJWT()
 
-	redisWrapper := utils.NewRedisClient(redis)
-
 	return &clientConfig{
-		DB:    db,
-		Redis: redisWrapper,
-		JWT:   jwt,
+		DB:  db,
+		JWT: jwt,
 	}
 }
 
@@ -57,7 +49,7 @@ func ConnectMySQLDatabase(
 	password string,
 	database string,
 ) *gorm.DB {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8&parseTime=True&loc=Local",
 		username,
 		password,
 		host,
@@ -70,6 +62,8 @@ func ConnectMySQLDatabase(
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
+
+	fmt.Println("test 1")
 
 	if err != nil {
 		log.Fatalf("failed to connect database: %v", err)
@@ -85,10 +79,10 @@ func ConnectMySQLDatabase(
 		&booking.BookingSeat{},
 	)
 
-	// seed.SeedTeam(db)
-	// match.SeedMatches(db)
-	// seed.SeedZones(db)
-	// seed.SeedSeats(db)
+	seed.SeedTeam(db)
+	match.SeedMatches(db)
+	seed.SeedZones(db)
+	seed.SeedSeats(db)
 	seed.SeedAdmin(db)
 
 	if errAutoMigrate != nil {

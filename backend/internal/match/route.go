@@ -10,14 +10,14 @@ type MatchRoutes struct {
 	group          *gin.RouterGroup
 	matchHandler   MatchHandler
 	userValidate   user.UserValidate
-	authMiddleware middlewares.AuthMiddleware
+	authMiddleware middlewares.AuthMiddlewareImpl
 }
 
 func NewMatchRoutes(
 	group *gin.RouterGroup,
 	matchHandler MatchHandler,
 	userValidate user.UserValidate,
-	authMiddleware middlewares.AuthMiddleware,
+	authMiddleware middlewares.AuthMiddlewareImpl,
 ) *MatchRoutes {
 
 	matchGroup := group.Group("/matches")

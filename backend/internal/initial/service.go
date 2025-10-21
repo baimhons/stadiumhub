@@ -7,7 +7,6 @@ import (
 	"github.com/baimhons/stadiumhub/internal/seat"
 	"github.com/baimhons/stadiumhub/internal/team"
 	"github.com/baimhons/stadiumhub/internal/user"
-	"github.com/baimhons/stadiumhub/internal/utils"
 	"github.com/baimhons/stadiumhub/internal/zone"
 )
 
@@ -21,11 +20,10 @@ type Service struct {
 	PaymentService payment.PaymentService
 }
 
-func NewService(repo *Repository, redis utils.RedisClient) *Service {
+func NewService(repo *Repository) *Service {
 	return &Service{
 		UserService: user.NewUserService(
 			repo.UserRepository,
-			redis,
 		),
 		MatchService: match.NewMatchService(
 			repo.MatchRepository,

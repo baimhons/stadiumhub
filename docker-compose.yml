@@ -17,19 +17,19 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
 
-  api:
-    build:
-      context: .
-      dockerfile: deployment/docker-images/api/api.Dockerfile
-    container_name: stadiumhub-api
-    restart: always
-    env_file:
-      - ./deployment/env/api.env
-    depends_on:
-      - mysql
-      - redis
-    ports:
-      - "${PORT}:8080"
+  # api:
+  #   build:
+  #     context: .
+  #     dockerfile: deployment/docker-images/api/api.Dockerfile
+  #   container_name: stadiumhub-api
+  #   restart: always
+  #   env_file:
+  #     - ./deployment/env/api.env
+  #   depends_on:
+  #     - mysql
+  #     - redis
+  #   ports:
+  #     - "${PORT}:8080"
 
   redis:
     image: redis:7

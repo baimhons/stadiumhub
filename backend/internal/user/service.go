@@ -1,13 +1,11 @@
 package user
 
 import (
-	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/baimhons/stadiumhub/internal/middlewares"
 	"github.com/baimhons/stadiumhub/internal/models"
 	"github.com/baimhons/stadiumhub/internal/user/api/request"
 	"github.com/baimhons/stadiumhub/internal/user/api/response"
@@ -26,13 +24,11 @@ type UserService interface {
 
 type userServiceImpl struct {
 	userRepository UserRepository
-	redis          utils.RedisClient
 }
 
-func NewUserService(userRepository UserRepository, redis utils.RedisClient) UserService {
+func NewUserService(userRepository UserRepository) UserService {
 	return &userServiceImpl{
 		userRepository: userRepository,
-		redis:          redis,
 	}
 }
 
@@ -88,15 +84,13 @@ func (us *userServiceImpl) LoginUser(req request.LoginUser) (resp utils.SuccessR
 		return resp, http.StatusUnauthorized, errors.New("invalid credentials")
 	}
 
-	// สร้าง session ID แบบ random
 	sessionID, err := utils.GenerateSecureToken(32)
 	if err != nil {
 		return resp, http.StatusInternalServerError, err
 	}
 
-	sessionExp := time.Hour * 24 // session หมดอายุใน 24 ชั่วโมง
+	sessionExp := time.Hour * 24
 
-	// เก็บ user context ใน Redis โดยใช้ session ID เป็น key
 	userContext := models.UserContext{
 		ID:       user.ID,
 		Username: user.Username,
@@ -104,20 +98,9 @@ func (us *userServiceImpl) LoginUser(req request.LoginUser) (resp utils.SuccessR
 		Email:    user.Email,
 	}
 
-	userContextJSON, _ := json.Marshal(userContext)
+	// 🔹 ใช้ in-memory cache แทน Redis
+	middlewares.SetSession(sessionID, userContext, sessionExp)
 
-	// เก็บ session ใน Redis
-	if err := us.redis.Set(
-		context.Background(),
-		fmt.Sprintf("session:%s", sessionID),
-		userContextJSON,
-		sessionExp,
-	); err != nil {
-		return resp, http.StatusInternalServerError, err
-	}
-
-	// return sessionID เพื่อให้ handler ไปตั้งค่า cookie
-	// แต่ไม่ส่งไปที่ client ใน response
 	return utils.SuccessResponse{
 		Message: "User logged in successfully!",
 		Data: map[string]interface{}{
@@ -127,13 +110,8 @@ func (us *userServiceImpl) LoginUser(req request.LoginUser) (resp utils.SuccessR
 }
 
 func (us *userServiceImpl) LogoutUser(userCtx models.UserContext, sessionID string) (int, error) {
-	err := us.redis.Del(
-		context.Background(),
-		fmt.Sprintf("session:%s", sessionID),
-	)
-	if err != nil {
-		return http.StatusInternalServerError, err
-	}
+	// ลบ session จาก in-memory store แทน Redis
+	middlewares.DeleteSession(sessionID)
 	return http.StatusOK, nil
 }
 

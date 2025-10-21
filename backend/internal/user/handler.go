@@ -60,66 +60,40 @@ func (h *userHandlerImpl) RegisterUser(c *gin.Context) {
 func (h *userHandlerImpl) LoginUser(c *gin.Context) {
 	req, ok := c.Get("req")
 	if !ok {
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse{
-			Message: "invalid request",
-			Error:   nil,
-		})
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse{Message: "invalid request"})
 		return
 	}
 
 	loginReq, ok := req.(request.LoginUser)
 	if !ok {
-		c.JSON(http.StatusBadRequest, utils.ErrorResponse{
-			Message: "invalid request type",
-			Error:   nil,
-		})
+		c.JSON(http.StatusBadRequest, utils.ErrorResponse{Message: "invalid request type"})
 		return
 	}
 
 	resp, status, err := h.userService.LoginUser(loginReq)
 	if err != nil {
-		c.JSON(status, utils.ErrorResponse{
-			Message: err.Error(),
-			Error:   err,
-		})
+		c.JSON(status, utils.ErrorResponse{Message: err.Error(), Error: err})
 		return
 	}
 
-	// ดึง session ID จาก response data
 	dataMap, ok := resp.Data.(map[string]interface{})
 	if !ok {
-		c.JSON(http.StatusInternalServerError, utils.ErrorResponse{
-			Message: "invalid response data",
-			Error:   nil,
-		})
+		c.JSON(http.StatusInternalServerError, utils.ErrorResponse{Message: "invalid response data"})
 		return
 	}
 
 	sessionID, ok := dataMap["sessionID"].(string)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, utils.ErrorResponse{
-			Message: "invalid session ID",
-			Error:   nil,
-		})
+		c.JSON(http.StatusInternalServerError, utils.ErrorResponse{Message: "invalid session ID"})
 		return
 	}
 
-	// ตั้งค่า cookie
-	c.SetCookie(
-		"session_id", // name
-		sessionID,    // value
-		86400,        // maxAge (วินาที) - 24 ชั่วโมง
-		"/",          // path
-		"",           // domain (ว่างไว้ = current domain)
-		true,         // secure (ใช้ HTTPS เท่านั้น)
-		true,         // httpOnly (ป้องกัน XSS)
-	)
+	c.SetCookie("session_id", sessionID, 86400, "/", "", false, true)
 
-	// ส่ง response กลับไปโดยไม่มี session ID
 	c.JSON(status, utils.SuccessResponse{
 		Message: resp.Message,
 		Data: response.LoginUserResponse{
-			Message: "Cookie has been set",
+			Message: "Cookie has been set (in-memory session)",
 		},
 	})
 }
@@ -143,7 +117,6 @@ func (h *userHandlerImpl) LogoutUser(c *gin.Context) {
 		return
 	}
 
-	// ดึง session ID จาก cookie
 	sessionID, err := c.Cookie("session_id")
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, utils.ErrorResponse{
@@ -153,7 +126,6 @@ func (h *userHandlerImpl) LogoutUser(c *gin.Context) {
 		return
 	}
 
-	// ลบ session จาก Redis
 	status, err := h.userService.LogoutUser(ctx, sessionID)
 	if err != nil {
 		c.JSON(status, utils.ErrorResponse{
@@ -167,10 +139,10 @@ func (h *userHandlerImpl) LogoutUser(c *gin.Context) {
 	c.SetCookie(
 		"session_id",
 		"",
-		-1, // maxAge = -1 จะลบ cookie
+		-1,
 		"/",
 		"",
-		true,
+		false,
 		true,
 	)
 

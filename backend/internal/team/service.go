@@ -28,17 +28,23 @@ type StadiumInfo struct {
 }
 
 func (ts *teamServiceImpl) InsertTeamCapacityAndPrice() error {
-	filePath := "C:/Users/gigam/repository/project_web_dev/backend/internal/data/premier_league_stadiums.json"
+	filePath := "./internal/data/premier_league_stadiums.json"
 	data, err := os.ReadFile(filePath)
+
+	fmt.Println("seed team data test 1")
 
 	if err != nil {
 		return fmt.Errorf("error reading file: %w", err)
 	}
 
+	fmt.Println("seed team data test 2")
+
 	var stadiums []StadiumInfo
 	if err := json.Unmarshal(data, &stadiums); err != nil {
 		return fmt.Errorf("error unmarshalling json: %w", err)
 	}
+
+	fmt.Println("seed team data test 3")
 
 	teams := []Team{}
 

@@ -7,6 +7,7 @@ var ENV struct {
 	APIFootball `mapstructure:"apifootball"`
 	Stripe      `mapstructure:"stripe"`
 	AdminData   `mapstructure:"adminData"`
+	EmailKey    `mapstructure:"emailKey"`
 }
 
 type Server struct {
@@ -14,11 +15,11 @@ type Server struct {
 }
 
 type Database struct {
-	Host     string `mapstructure:"host" defaultValue:"mysql"`
+	Host     string `mapstructure:"host" defaultValue:"localhost"`
 	Port     int    `mapstructure:"port" defaultValue:"3306"`
-	User     string `mapstructure:"user" defaultValue:"stadiumhubuser"`
-	Password string `mapstructure:"password" defaultValue:"root"`
-	Name     string `mapstructure:"name" defaultValue:"stadiumhub"`
+	User     string `mapstructure:"user" defaultValue:"168DB54"`
+	Password string `mapstructure:"password" defaultValue:"pXGdx9K7"`
+	Name     string `mapstructure:"name" defaultValue:"168DB_54"`
 	Driver   string `mapstructure:"driver" defaultValue:"mysql"`
 }
 
@@ -42,4 +43,8 @@ type AdminData struct {
 	Password    string `mapstructure:"password" defaultValue:"4Dm1n3_7-0"`
 	PhoneNumber string `mapstructure:"phoneNumber" defaultValue:"012345678"`
 	Role        string `mapstructure:"role" defaultValue:"admin"`
+}
+
+type EmailKey struct {
+	EmailKey string `mapstructure:"emailKey" defaultValue:"scfv mowy chgo tmjy"`
 }

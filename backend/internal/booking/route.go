@@ -11,7 +11,7 @@ type BookingRoutes struct {
 	bookingHandler  BookingHandler
 	bookingValidate BookingValidate
 	userValidate    user.UserValidate
-	authMiddleware  middlewares.AuthMiddleware
+	authMiddleware  middlewares.AuthMiddlewareImpl
 }
 
 func NewBookingRoutes(
@@ -19,7 +19,7 @@ func NewBookingRoutes(
 	bookingHandler BookingHandler,
 	bookingValidate BookingValidate,
 	userValidate user.UserValidate,
-	authMiddleware middlewares.AuthMiddleware,
+	authMiddleware middlewares.AuthMiddlewareImpl,
 ) *BookingRoutes {
 
 	bookingGroup := group.Group("/booking")

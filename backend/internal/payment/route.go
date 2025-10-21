@@ -9,14 +9,14 @@ type PaymentRoutes struct {
 	group           *gin.RouterGroup
 	paymentHandler  PaymentHandler
 	paymentValidate PaymentValidate
-	authMiddleware  middlewares.AuthMiddleware
+	authMiddleware  middlewares.AuthMiddlewareImpl
 }
 
 func NewPaymentRoutes(
 	group *gin.RouterGroup,
 	paymentHandler PaymentHandler,
 	paymentValidate PaymentValidate,
-	authMiddleWare middlewares.AuthMiddleware,
+	authMiddleWare middlewares.AuthMiddlewareImpl,
 ) *PaymentRoutes {
 
 	paymentGroup := group.Group("/payment")

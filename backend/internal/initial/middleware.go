@@ -3,17 +3,16 @@ package initial
 import (
 	middlewareInternal "github.com/baimhons/stadiumhub/internal/middlewares"
 	middlewareConfig "github.com/baimhons/stadiumhub/internal/middlewares/configs"
-	"github.com/baimhons/stadiumhub/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
 type Middleware struct {
-	AuthMiddleware middlewareInternal.AuthMiddleware
+	AuthMiddleware middlewareInternal.AuthMiddlewareImpl
 }
 
-func NewMiddleware(redis utils.RedisClient) *Middleware {
+func NewMiddleware() *Middleware {
 	return &Middleware{
-		AuthMiddleware: middlewareInternal.NewAuthMiddleware(redis),
+		AuthMiddleware: middlewareInternal.AuthMiddlewareImpl{},
 	}
 }
 

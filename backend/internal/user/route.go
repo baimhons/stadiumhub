@@ -9,14 +9,14 @@ type UserRoutes struct {
 	group          *gin.RouterGroup
 	userHandler    UserHandler
 	userValidate   UserValidate
-	authMiddleware middlewares.AuthMiddleware
+	authMiddleware middlewares.AuthMiddlewareImpl
 }
 
 func NewUserRoutes(
 	group *gin.RouterGroup,
 	userHandler UserHandler,
 	userValidate UserValidate,
-	authMiddleware middlewares.AuthMiddleware,
+	authMiddleware middlewares.AuthMiddlewareImpl,
 ) *UserRoutes {
 
 	userGroup := group.Group("/user")
