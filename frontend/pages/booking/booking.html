@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seat Booking</title>
+  <link rel="stylesheet" href="../../style/styles_booking.css">
+</head>
+<body>
+   <header class="site-header">
+    <nav class="main-nav">
+        <h1 id="site-title">Stadium Hub</h1>
+        <div class="nav-right">
+            <button class="user-profile" id="user-profile">User Profile</button>
+        </div>
+    </nav>
+</header>
+
+  <main class="booking-container">
+    <!-- Sidebar with Stadium & Zones -->
+    <aside class="sidebar">
+
+      <div id="zones-list" class="zones-list">
+        <div class="loading-spinner">Loading zones...</div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <section class="main-area">
+      <div id="empty-state" class="empty-state">
+        <h2>Select Zone</h2>
+        <p>Please select a zone from the left to view available seats</p>
+      </div>
+      
+      <div id="seat-selection" class="seat-selection">
+        <div class="zone-header">
+          <h2 id="selected-zone-name">Zone Name</h2>
+          <button id="back-to-zones" class="btn-back">← Back to Zones</button>
+        </div>
+        <div id="seats-container" class="seats-grid">
+          <!-- Seats will be loaded here -->
+        </div>
+        <div class="booking-summary">
+          <div class="selected-seats-info">
+            <span>Selected Seats: <strong id="selected-count">0</strong></span>
+            <span>Total Price: <strong id="total-price">0</strong> THB</span>
+          </div>
+          <button id="confirm-booking" class="btn-confirm" disabled>Confirm Booking</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = 'http://localhost:8080/api/v1';
+    const urlParams = new URLSearchParams(window.location.search);
+    const matchId = urlParams.get('match_id');
+    const teamId = urlParams.get('team_id');
+    const profile = document.getElementById('user-profile');
+
+    let selectedSeats = [];
+    let currentZone = null;
+
+    // Fetch zones
+    async function loadZones() {
+        try {
+            const res = await fetch(`${API_BASE}/zone/${matchId}`);
+            if (!res.ok) throw new Error('Failed to load zones');
+            
+            const data = await res.json();
+            const zones = data.data;
+            
+            const zonesList = document.getElementById('zones-list');
+            zonesList.innerHTML = '';
+
+            zones.forEach(zone => {
+            const zoneItem = document.createElement('div');
+            zoneItem.className = 'zone-item';
+            zoneItem.innerHTML = `
+                <span class="zone-name">${zone.name}</span>
+                <span class="zone-price">${zone.team.Price} THB</span>
+            `;
+            zoneItem.onclick = (event) => selectZone(zone, event);
+            zonesList.appendChild(zoneItem);
+            });
+        } catch (err) {
+            console.error(err);
+            document.getElementById('zones-list').innerHTML = 
+            `<p class="error">Failed to load zones</p>`;
+        }
+    }
+
+    // Select zone and load seats
+    async function selectZone(zone, event) {
+      currentZone = zone;
+      selectedSeats = []; // เคลียร์ที่นั่งที่เลือกเมื่อเปลี่ยนโซน
+      updateSummary(); // อัปเดตสรุปเป็น 0
+      document.getElementById('selected-zone-name').textContent = zone.name;
+      document.getElementById('empty-state').style.display = 'none';
+      document.getElementById('seat-selection').style.display = 'block';
+      
+      // Highlight selected zone
+      document.querySelectorAll('.zone-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      event.target.closest('.zone-item').classList.add('active'); 
+      
+    loadSeats(zone.id);
+    }
+
+        // Load seats for selected zone
+        async function loadSeats(zoneId) {
+            try {
+                console.log('Fetching seats for:', { matchId, teamId, zoneId });
+
+                const seatsContainer = document.getElementById('seats-container');
+                seatsContainer.innerHTML = '<div class="loading-spinner">Loading seats...</div>';
+                
+                const res = await fetch(
+                    `${API_BASE}/seat/available?match_id=${matchId}&team_id=${teamId}&zone_id=${zoneId}`
+                );
+                console.log('Response status:', res.status);
+                
+                if (!res.ok) throw new Error('Failed to load seats');
+                
+                const json = await res.json();
+                console.log('Seat response JSON:', json);
+                
+                const seats = Array.isArray(json) ? json : json.data || [];
+                if (!Array.isArray(seats)) throw new Error('Seats is not an array');
+                
+                seatsContainer.innerHTML = '';
+                const seatsByRow = {};
+                
+                seats.forEach(seat => {
+                    if (!seat.ID || typeof seat.ID !== 'string' || seat.ID.length < 5) {
+                        console.warn(`Seat ${seat.SeatNo || 'Unknown'} is missing a valid 'ID' and will be skipped.`);
+                        return; 
+                    }
+                    
+                    seat.id = seat.ID; 
+
+                    const rowKey = seat.SeatNo?.split('-')[0] || 'unknown';
+                    if (!seatsByRow[rowKey]) seatsByRow[rowKey] = [];
+                    seatsByRow[rowKey].push(seat);
+                });
+
+                // ส่วนที่เหลือของโค้ดการแสดงผลยังคงเดิม
+                Object.keys(seatsByRow).sort().forEach(row => {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = 'seat-row';
+                    seatsByRow[row].forEach(seat => {
+                        const seatBtn = document.createElement('button');
+                        seatBtn.className = 'seat available';
+                        seatBtn.textContent = seat.SeatNo || '?';
+                        seatBtn.onclick = () => toggleSeat(seat, seatBtn);
+                        rowDiv.appendChild(seatBtn);
+                    });
+                    seatsContainer.appendChild(rowDiv);
+                });
+
+            } catch (err) {
+                console.error('Error loading seats:', err);
+                document.getElementById('seats-container').innerHTML = 
+                `<p class="error">Failed to load seats: ${err.message}</p>`;
+            }
+        }
+
+
+    // Toggle seat selection
+    function toggleSeat(seat, element) {
+      const MAX_SEATS = 6; 
+      const index = selectedSeats.findIndex(s => s.id === seat.id);
+      
+      if (index > -1) {
+        selectedSeats.splice(index, 1);
+        element.classList.remove('selected');
+      } else {
+        if (selectedSeats.length >= MAX_SEATS) {
+          alert(`สามารถเลือกที่นั่งได้สูงสุด ${MAX_SEATS} ที่นั่งเท่านั้น`);
+          return; 
+        }
+        selectedSeats.push(seat);
+        element.classList.add('selected');
+      }
+      
+      updateSummary();
+    }
+
+    // Update booking summary
+    function updateSummary() {
+      const count = selectedSeats.length;
+      const pricePerSeat = currentZone?.team?.Price || 0; 
+      const total = count * pricePerSeat;
+      
+      document.getElementById('selected-count').textContent = count;
+      document.getElementById('total-price').textContent = total.toLocaleString('en-US'); 
+      document.getElementById('confirm-booking').disabled = count === 0;
+    }
+
+    // Back to zones
+    document.getElementById('back-to-zones').onclick = () => {
+      document.getElementById('seat-selection').style.display = 'none';
+      document.getElementById('empty-state').style.display = 'flex';
+      selectedSeats = [];
+      currentZone = null;
+      document.querySelectorAll('.zone-item').forEach(item => {
+        item.classList.remove('active');
+      });
+    };
+
+    // Confirm booking
+    document.getElementById('confirm-booking').onclick = async () => {
+        if (selectedSeats.length === 0) {
+            alert('กรุณาเลือกที่นั่งอย่างน้อย 1 ที่นั่ง');
+            return;
+        }
+        const seatIdsToSend = selectedSeats
+                                .map(s => s.id)
+                                .filter(id => typeof id === 'string' && id.length > 0); 
+        if (seatIdsToSend.length === 0) {
+            alert('ไม่พบ ID ที่นั่งที่ถูกต้องสำหรับการจอง โปรดลองเลือกที่นั่งอื่นหรือติดต่อผู้ดูแลระบบ');
+            return;
+        }
+
+        const payload = {
+            match_id: parseInt(matchId), 
+            seat_ids: seatIdsToSend 
+        };
+
+        console.log('Sending Booking Payload:', payload);
+
+        try {
+            const res = await fetch(`${API_BASE}/booking/create`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                credentials: 'include' 
+            });
+            
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({ message: 'Unknown error' }));
+                // แสดงข้อความ error ที่อ่านง่ายขึ้น
+                throw new Error(errorData.message || `Booking failed with status: ${res.status}`);
+            }
+            
+            alert('จองตั๋วสำเร็จแล้ว!');
+            window.location.reload(); 
+        } catch (err) {
+            console.error('Booking failed:', err);
+            alert('จองตั๋วไม่สำเร็จ: ' + err.message);
+        }
+    };
+
+          profile.addEventListener('click', () => {
+                      window.location.href = '../user/profile.html';
+          });
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!matchId || !teamId) {
+        alert('Invalid booking parameters');
+        window.location.href = '../match/match.html';
+        return;
+      }
+      
+      loadZones();
+    });
+  </script>
+</html>

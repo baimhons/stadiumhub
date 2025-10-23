@@ -57,8 +57,8 @@ func (ps *paymentServiceImpl) StripeSession(userID uuid.UUID, bookingID uuid.UUI
 			},
 			Quantity: stripe.Int64(1),
 		}},
-		SuccessURL: stripe.String("http://127.0.0.1:5500/frontend/pages/payment/success.html"),
-		CancelURL:  stripe.String("http://127.0.0.1:5500/frontend/pages/payment/cancel.html"),
+		SuccessURL: stripe.String("http://202.44.40.193/~cs6636429/StadiumHub/frontend/pages/payment/success.html"),
+		CancelURL:  stripe.String("http://202.44.40.193/~cs6636429/StadiumHub/frontend/pages/payment/cancel.html"),
 		ExpiresAt:  stripe.Int64(time.Now().Add(30 * time.Minute).Unix()),
 	}
 

@@ -55,12 +55,11 @@
     };
 
     try {
-      // 1️⃣ Login
       const loginResp = await fetch('http://localhost:8080/api/v1/user/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
-        credentials: 'include' // ✅ สำคัญมากเพื่อให้ browser เก็บ session cookie
+        credentials: 'include' 
       });
 
       if (!loginResp.ok) {
@@ -70,19 +69,16 @@
         return;
       }
 
-      // 2️⃣ ตรวจสอบ profile ด้วย cookie ที่ได้มา
       const profileResp = await fetch('http://localhost:8080/api/v1/user/profile', {
         method: 'GET',
-        credentials: 'include' // ✅ ส่ง cookie ไปด้วย
+        credentials: 'include' 
       });
 
       const profileData = await profileResp.json();
       console.log('PROFILE:', profileData);
 
-      // แสดงผลลัพธ์ไว้ก่อน (debug)
       result.textContent = JSON.stringify(profileData, null, 2);
 
-      // 3️⃣ ตรวจสอบ role แล้ว redirect
       if (profileResp.ok && profileData?.data) {
         const user = profileData.data;
 

@@ -15,11 +15,11 @@ type Server struct {
 }
 
 type Database struct {
-	Host     string `mapstructure:"host" defaultValue:"localhost"`
+	Host     string `mapstructure:"host" defaultValue:"mysql"`
 	Port     int    `mapstructure:"port" defaultValue:"3306"`
-	User     string `mapstructure:"user" defaultValue:"168DB54"`
-	Password string `mapstructure:"password" defaultValue:"pXGdx9K7"`
-	Name     string `mapstructure:"name" defaultValue:"168DB_54"`
+	User     string `mapstructure:"user" defaultValue:"stadiumhubuser"`
+	Password string `mapstructure:"password" defaultValue:"root"`
+	Name     string `mapstructure:"name" defaultValue:"stadiumhub"`
 	Driver   string `mapstructure:"driver" defaultValue:"mysql"`
 }
 

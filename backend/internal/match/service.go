@@ -83,7 +83,6 @@ func SeedMatches(db *gorm.DB) {
 		for _, m := range apiMatches {
 			utcDate, _ := time.Parse(time.RFC3339, m.UtcDate)
 
-			utcDate = utcDate.In(time.UTC)
 			t := team.Team{}
 			if err := db.Where("ID = ?", m.HomeTeam.ID).First(&t).Error; err != nil {
 				fmt.Printf("team not found: %d\n", m.HomeTeam.ID)
@@ -144,7 +143,6 @@ func (s *matchServiceImpl) UpdateMatches(month int, year int) (string, int, erro
 
 		for _, m := range apiMatches {
 			utcDate, _ := time.Parse(time.RFC3339, m.UtcDate)
-			utcDate = utcDate.In(time.UTC)
 
 			t, err := s.matchRepo.GetTeamByID(m.HomeTeam.ID)
 			if err != nil {

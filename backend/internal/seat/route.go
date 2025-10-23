@@ -23,5 +23,5 @@ func NewSeatRoutes(
 
 func (r *SeatRoutes) RegisterRoutes() {
 
-	r.group.GET("/avaliable", r.seatHandler.GetAvailableSeats)
+	r.group.GET("/available", r.seatHandler.GetAvailableSeats)
 }
