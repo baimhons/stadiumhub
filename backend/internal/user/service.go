@@ -101,12 +101,19 @@ func (us *userServiceImpl) LoginUser(req request.LoginUser) (resp utils.SuccessR
 	// 🔹 ใช้ in-memory cache แทน Redis
 	middlewares.SetSession(sessionID, userContext, sessionExp)
 
+	// สร้างลายเซ็น
+	signature := utils.SignSession(sessionID)
+
+	// รวมกันเป็นค่าเดียว เช่น sessionID|signature
+	signedSession := sessionID + "|" + signature
+
 	return utils.SuccessResponse{
 		Message: "User logged in successfully!",
 		Data: map[string]interface{}{
-			"sessionID": sessionID,
+			"session_id": signedSession,
 		},
 	}, http.StatusOK, nil
+
 }
 
 func (us *userServiceImpl) LogoutUser(userCtx models.UserContext, sessionID string) (int, error) {

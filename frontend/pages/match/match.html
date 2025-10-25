@@ -19,7 +19,7 @@
   <main class="main-content">
     <!-- Teams Section -->
     <section class="teams-section">
-      <h2 class="section-title">Select Team</h2>
+      <h2 class="section-title" id="section-title">Select Team</h2>
       <div class="search-box">
         <input type="text" id="team-search" placeholder="Search teams..." aria-label="Search teams">
       </div>
@@ -61,6 +61,7 @@
           const nextPageBtn = document.getElementById('next-page');
           const pageInfoEl = document.getElementById('page-info');
           const profile = document.getElementById('user-profile');
+          const selectedTeamEl = document.getElementById('section-title');
 
           // State
         let currentPage = 1;
@@ -254,8 +255,8 @@
             document.querySelectorAll('.team-card').forEach(c => c.classList.remove('selected'));
             element.classList.add('selected');
             selectedTeamId = teamId;
+            selectedTeamEl.textContent = `${teamName} Matches`;
             currentPage = 1; // Reset page
-            siteTitleEl.textContent = `${teamName} Matches`;
             fetchMatches(1, teamId);
           }
 
@@ -319,6 +320,7 @@
               } else if (filter === 'all') {
                 selectedTeamId = null;
                 document.querySelectorAll('.team-card').forEach(c => c.classList.remove('selected'));
+                selectedTeamEl.textContent = 'Select Team';
                 currentPage = 1; 
                 fetchMatches(currentPage, null); 
               }

@@ -28,7 +28,7 @@ type StadiumInfo struct {
 }
 
 func (ts *teamServiceImpl) InsertTeamCapacityAndPrice() error {
-	filePath := "./internal/data/premier_league_stadiums.json"
+	filePath := "C:/Users/gigam/repository/project_web_dev/backend/internal/data/premier_league_stadiums.json"
 	data, err := os.ReadFile(filePath)
 
 	fmt.Println("seed team data test 1")
