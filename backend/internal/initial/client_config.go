@@ -6,7 +6,6 @@ import (
 	"github.com/baimhons/stadiumhub/internal/booking"
 	"github.com/baimhons/stadiumhub/internal/match"
 	"github.com/baimhons/stadiumhub/internal/seat"
-	"github.com/baimhons/stadiumhub/internal/seed"
 	"github.com/baimhons/stadiumhub/internal/team"
 	"github.com/baimhons/stadiumhub/internal/user"
 	"github.com/baimhons/stadiumhub/internal/utils"
@@ -113,11 +112,11 @@ func ConnectPostgresDatabase() *gorm.DB {
 	}
 
 	// seed ข้อมูล
-	seed.SeedTeam(db)
+	// seed.SeedTeam(db)
 	match.SeedMatches(db)
-	seed.SeedZones(db)
-	seed.SeedSeats(db)
-	seed.SeedAdmin(db)
+	// seed.SeedZones(db)
+	// seed.SeedSeats(db)
+	// seed.SeedAdmin(db)
 
 	log.Println("PostgreSQL database connected successfully")
 
