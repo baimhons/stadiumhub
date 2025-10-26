@@ -307,7 +307,7 @@ section {
 .match-card {
     display: table-row;
     border-bottom: 1px solid #e2e8f0;
-    background: white;
+    background: rgb(255, 255, 255);
     transition: all 0.2s ease;
 }
 
@@ -319,6 +319,12 @@ section {
     display: table-cell;
     padding: 1.25rem 1rem;
     vertical-align: middle;
+}
+
+.match-card.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .match-date {
@@ -398,12 +404,6 @@ section {
     text-transform: uppercase;
     text-align: center;
     width: 120px;
-}
-
-.match-card.disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  pointer-events: none; 
 }
 
 
@@ -547,13 +547,14 @@ button[disabled] {
     }
     
     .matches-section {
-        padding: 1.5rem;
+        padding-top: 100px;
     }
     
     .match-card > * {
         display: block;
         width: 100% !important;
         border-bottom: none;
+        margin-bottom: 10px;
     }
     
     .match-teams {
@@ -561,9 +562,28 @@ button[disabled] {
         gap: 1rem;
         width: 100% !important;
     }
-    
-    .team.away-team {
+
+    .match-vs {
+        margin: 20px;
+    }
+
+    .team.home-team {
+        margin-left: 50px;
         justify-content: flex-start;
+        font: 10px sans-serif;
+    }
+
+    .team.away-team {
+        margin-left: 50px;
+        justify-content: flex-end;
+        font: 10px sans-serif;
+
+    }
+
+    .match-status {
+        margin: 10px;
+        border: 10px;
+        text-align: center;
     }
     
     .pagination {
@@ -571,35 +591,10 @@ button[disabled] {
     }
 }
 
-/* Tablet - 768px and up */
-@media (min-width: 768px) and (max-width: 1024px) {
-    .teams-section {
-        width: 240px;
-    }
-    
-    .matches-section {
-        padding: 1.5rem;
-    }
-    
-    .match-teams {
-        width: 350px;
-    }
-}
 
 /* Desktop - 1024px and up */
 @media (min-width: 1024px) {
     .teams-section {
         width: 280px;
-    }
-}
-
-/* Large Desktop - 1280px and up */
-@media (min-width: 1280px) {
-    .teams-section {
-        width: 320px;
-    }
-    
-    .matches-section {
-        padding: 2.5rem 3rem;
     }
 }

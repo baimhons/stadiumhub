@@ -207,11 +207,17 @@
               const status = (match.Status || 'SCHEDULED').toUpperCase();
               const isFinished = status === 'FINISHED';
 
+              const isInPlay = status === 'IN_PLAY' || status === 'LIVE';
+
               const card = document.createElement('article');
               card.className = 'match-card';
               card.setAttribute('data-status', status);
         
               if (isFinished) {
+                card.classList.add('disabled');
+              }
+
+              if (isInPlay) {
                 card.classList.add('disabled');
               }
 

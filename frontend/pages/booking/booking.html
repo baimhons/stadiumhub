@@ -23,6 +23,8 @@
       <div id="zones-list" class="zones-list">
         <div class="loading-spinner">Loading zones...</div>
       </div>
+
+      <div id="back-to-match"> ← Back To Match </div>
     </aside>
 
     <!-- Main Content Area -->
@@ -208,6 +210,10 @@
         item.classList.remove('active');
       });
     };
+
+       document.getElementById('back-to-match').onclick = () => { 
+            window.location.href = `../match/match.html`;
+        };
 
     // Confirm booking
     document.getElementById('confirm-booking').onclick = async () => {
