@@ -2,352 +2,103 @@
 <html lang="th">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>เข้าสู่ระบบ - จองสนามฟุตบอล</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login Form (JSON POST)</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .card {
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      padding: 40px;
-      width: 100%;
-      max-width: 440px;
-    }
-    h2 {
-      color: #333;
-      margin-bottom: 30px;
-      text-align: center;
-      font-size: 28px;
-    }
-    label {
-      display: block;
-      margin-bottom: 20px;
-      color: #555;
-      font-weight: 500;
-    }
-    input {
-      width: 100%;
-      padding: 12px 16px;
-      margin-top: 8px;
-      border: 2px solid #e0e0e0;
-      border-radius: 8px;
-      font-size: 15px;
-      transition: border-color 0.3s;
-    }
-    input:focus {
-      outline: none;
-      border-color: #667eea;
-    }
-    .btn {
-      width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.2s, opacity 0.3s;
-      margin-top: 10px;
-    }
-    .btn:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-    }
-    .btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    .muted {
-      text-align: center;
-      margin-top: 25px;
-      color: #666;
-      font-size: 14px;
-      line-height: 1.8;
-    }
-    .muted a {
-      color: #667eea;
-      text-decoration: none;
-      font-weight: 600;
-    }
-    .muted a:hover {
-      text-decoration: underline;
-    }
-    .console {
-      background: #1e1e1e;
-      color: #00ff00;
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 20px;
-      font-family: 'Courier New', monospace;
-      font-size: 13px;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-    .error {
-      color: #ff4444 !important;
-    }
-    .success {
-      color: #00ff00 !important;
-    }
-    .env-badge {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      padding: 8px 16px;
-      background: rgba(255,255,255,0.2);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
-      color: white;
-      font-size: 12px;
-      font-weight: 600;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial; background:#f6f8fa; display:flex; align-items:center; justify-content:center; height:100vh; margin:0; }
+    .card { background:white; padding:24px; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.08); width:360px; }
+    h1 { font-size:18px; margin:0 0 16px; }
+    label { display:block; margin-top:10px; font-size:13px; color:#333; }
+    input[type="text"], input[type="password"] { width:100%; padding:10px 12px; margin-top:6px; border-radius:8px; border:1px solid #ddd; box-sizing:border-box; }
+    button { margin-top:16px; width:100%; padding:10px 12px; border-radius:8px; border:0; background:#2563eb; color:white; font-weight:600; cursor:pointer; }
+    button:disabled { opacity:0.6; cursor:default; }
+    pre { background:#f3f4f6; padding:12px; border-radius:8px; margin-top:12px; max-height:200px; overflow:auto; font-size:13px; }
+    .hint { margin-top:8px; font-size:12px; color:#666; }
   </style>
 </head>
 <body>
-  <div class="env-badge" id="envBadge">🔧 Loading...</div>
-  
   <div class="card">
-    <h2>เข้าสู่ระบบ</h2>
+    <h1>เข้าสู่ระบบ (ส่ง JSON)</h1>
 
-    <form id="loginForm" novalidate>
-      <label for="loginEmail">
-        อีเมลหรือชื่อผู้ใช้
-        <input
-          type="text"
-          id="loginEmail"
-          name="username_or_email"
-          placeholder="adminStadiumHub"
-          autocomplete="username"
-          required
-        />
-      </label>
+    <form id="loginForm">
+      <label for="username_or_email">Username or Email</label>
+      <input id="username_or_email" name="username_or_email" type="text" autocomplete="username" required
+             value="test1234@gmail.com">
 
-      <label for="loginPassword">
-        รหัสผ่าน
-        <input
-          type="password"
-          id="loginPassword"
-          name="password"
-          placeholder="••••••••"
-          minlength="6"
-          autocomplete="current-password"
-          required
-        />
-      </label>
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required
+             value="dwd234ii-">
 
-      <button class="btn" id="submitBtn" type="submit">เข้าสู่ระบบ</button>
+      <button id="submitBtn" type="submit">Login</button>
 
-      <p class="muted">
-        ยังไม่มีบัญชี? <a href="register.html">สมัครสมาชิก</a><br />
-        <a href="../pages/index.html">หน้าแรก</a>
-      </p>
     </form>
 
-    <pre id="result" class="console">พร้อมเข้าสู่ระบบ...</pre>
+    <a href="../user/profile.html">profile</a>
+
+    <pre id="result">ผลลัพธ์จะปรากฎที่นี่...</pre>
   </div>
 
   <script>
-    const form = document.getElementById('loginForm');
-    const result = document.getElementById('result');
-    const submitBtn = document.getElementById('submitBtn');
-    const envBadge = document.getElementById('envBadge');
+  const form = document.getElementById('loginForm');
+  const result = document.getElementById('result');
+  const submitBtn = document.getElementById('submitBtn');
 
-    // ✅ ตรวจสอบ environment และตั้ง API_BASE อัตโนมัติ
-    const isLocalhost = window.location.hostname === 'localhost' || 
-                        window.location.hostname === '127.0.0.1';
-    
-    const API_BASE = isLocalhost 
-      ? 'http://localhost:8080/api/v1'  // Development
-      : 'https://stadiumhub.onrender.com/api/v1';  // Production
+  const API_BASE = 'https://stadiumhub.onrender.com/api/v1';
 
-    // แสดง environment badge
-    envBadge.textContent = isLocalhost ? '🔧 Development' : '🚀 Production';
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    result.textContent = 'กำลังเข้าสู่ระบบ...';
 
-    // ✅ ระบบจัดการ Token แบบ in-memory (ไม่ใช้ localStorage)
-    let sessionToken = null;
+    const payload = {
+      username_or_email: document.getElementById('username_or_email').value.trim(),
+      password: document.getElementById('password').value
+    };
 
-    function saveToken(token) {
-      sessionToken = token;
-      console.log('✅ Token saved in memory');
-    }
+    try {
+      const loginResp = await fetch(`${API_BASE}/user/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        credentials: 'include' 
+      });
 
-    function getToken() {
-      return sessionToken;
-    }
-
-    function clearToken() {
-      sessionToken = null;
-    }
-
-    function log(message, isError = false) {
-      result.className = isError ? 'console error' : 'console';
-      result.textContent = message;
-      console.log(message);
-    }
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      if (!form.checkValidity()) {
-        form.reportValidity();
+      if (!loginResp.ok) {
+        const errText = await loginResp.text();
+        result.textContent = `เข้าสู่ระบบไม่สำเร็จ: ${loginResp.status}\n\n${errText}`;
+        submitBtn.disabled = false;
         return;
       }
 
-      submitBtn.disabled = true;
-      log('🔄 กำลังเข้าสู่ระบบ...\nAPI: ' + API_BASE);
+      const profileResp = await fetch(`${API_BASE}/user/profile`, {
+        method: 'GET',
+        credentials: 'include' 
+      });
 
-      const payload = {
-        username_or_email: document.getElementById('loginEmail').value.trim(),
-        password: document.getElementById('loginPassword').value,
-      };
+      const profileData = await profileResp.json();
+      console.log('PROFILE:', profileData);
 
-      try {
-        // ขั้นตอนที่ 1: Login
-        log('📤 กำลังส่งข้อมูลเข้าสู่ระบบ...');
-        const loginResp = await fetch(`${API_BASE}/user/login`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify(payload),
-          credentials: 'include',
-        });
+      result.textContent = JSON.stringify(profileData, null, 2);
 
-        const loginData = await loginResp.json();
-        console.log('LOGIN Response:', {
-          status: loginResp.status,
-          headers: Object.fromEntries(loginResp.headers.entries()),
-          data: loginData
-        });
+      if (profileResp.ok && profileData?.data) {
+        const user = profileData.data;
 
-        if (!loginResp.ok) {
-          throw new Error(loginData.message || `Login failed: ${loginResp.status}`);
-        }
-
-        // ✅ บันทึก token (ดึงจาก response body)
-        let token = null;
-        if (loginData.data?.session_id) {
-          token = loginData.data.session_id;
-        } else if (loginData.data?.token) {
-          token = loginData.data.token;
-        }
-
-        if (token) {
-          saveToken(token);
-          log(`✅ Login สำเร็จ!\nToken: ${token.substring(0, 30)}...\nMode: ${isLocalhost ? 'Cookie' : 'Token-based'}`);
+        if (user.role === 'admin' || user.is_admin === true) {
+          window.location.href = '../admin/admin.html';
         } else {
-          log('✅ Login สำเร็จ! (Cookie-based)');
+          window.location.href = '../match/match.html';
         }
-
-        // ขั้นตอนที่ 2: ดึงข้อมูล Profile
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        log('🔄 กำลังดึงข้อมูลผู้ใช้...');
-        
-        const headers = {
-          'Accept': 'application/json'
-        };
-        
-        // ✅ ส่ง token ใน Authorization header (บังคับใน production)
-        // reuse token variable declared earlier to avoid redeclaration error
-        token = getToken();
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-          console.log('📤 Sending Authorization:', headers['Authorization'].substring(0, 40) + '...');
-        } else if (!isLocalhost) {
-          throw new Error('No token available for production mode');
-        }
-
-        const profileResp = await fetch(`${API_BASE}/user/profile`, {
-          method: 'GET',
-          headers: headers,
-          credentials: 'include'
-        });
-
-        const profileData = await profileResp.json();
-        console.log('PROFILE Response:', {
-          status: profileResp.status,
-          headers: Object.fromEntries(profileResp.headers.entries()),
-          data: profileData
-        });
-
-        if (!profileResp.ok) {
-          throw new Error(profileData.message || `Profile fetch failed: ${profileResp.status}`);
-        }
-
-        // แสดงข้อมูลผู้ใช้
-        const userInfo = JSON.stringify(profileData, null, 2);
-        log(`✅ พบข้อมูลผู้ใช้:\n${userInfo}`);
-
-        // ตรวจสอบ role และ redirect
-        if (profileData?.data) {
-          const user = profileData.data;
-          
-          setTimeout(() => {
-            const isAdmin = user.role === 'admin' || user.is_admin === true;
-            const targetPage = isAdmin ? '../admin/admin.html' : '../match/match.html';
-            
-            log(`🔄 กำลังไปยังหน้า ${isAdmin ? 'Admin' : 'Match'}...`, false);
-            
-            // Redirect
-            window.location.href = targetPage;
-          }, 1500);
-        } else {
-          throw new Error('ไม่พบข้อมูลผู้ใช้ใน response');
-        }
-
-      } catch (err) {
-        console.error('❌ Error:', err);
-        clearToken();
-        
-        let errorMsg = `❌ เกิดข้อผิดพลาด:\n${err.message}\n\n`;
-        
-        if (err.message.includes('Failed to fetch')) {
-          errorMsg += '🔍 ไม่สามารถเชื่อมต่อ Backend:\n';
-          errorMsg += `- ตรวจสอบว่า Backend ทำงานอยู่หรือไม่\n`;
-          errorMsg += `- URL: ${API_BASE}\n`;
-          errorMsg += `- ตรวจสอบ CORS configuration`;
-        } else if (err.message.includes('401') || err.message.includes('session')) {
-          errorMsg += '🔍 ปัญหา Authentication:\n';
-          errorMsg += `- Username/Password ไม่ถูกต้อง\n`;
-          errorMsg += `- หรือ Session/Cookie ไม่ทำงาน\n`;
-          errorMsg += `- ENV: ${isLocalhost ? 'Local (Cookie ใช้ได้)' : 'Production (ต้องใช้ Token!)'}`;
-        } else {
-          errorMsg += '🔍 โปรดตรวจสอบ Console สำหรับรายละเอียดเพิ่มเติม';
-        }
-        
-        log(errorMsg, true);
-      } finally {
-        submitBtn.disabled = false;
+      } else {
+        result.textContent = 'ไม่สามารถดึงข้อมูลผู้ใช้จาก session ได้';
       }
-    });
 
-    // เติมค่า default สำหรับทดสอบ
-    if (isLocalhost) {
-      document.getElementById('loginEmail').value = 'adminStadiumHub';
-      log('🔧 Development Mode\nAPI: ' + API_BASE + '\n\nพร้อมทดสอบ (Cookie-based)');
-    } else {
-      log('🚀 Production Mode\nAPI: ' + API_BASE + '\n\nพร้อมใช้งาน (Token-based)');
+    } catch (err) {
+      result.textContent = 'เกิดข้อผิดพลาด: ' + err.message;
+    } finally {
+      submitBtn.disabled = false;
     }
-  </script>
+  });
+</script>
+
 </body>
 </html>
