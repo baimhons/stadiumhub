@@ -88,7 +88,15 @@ func (h *userHandlerImpl) LoginUser(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("session_id", sessionID, 86400, "/", "", false, true)
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "session_id",
+		Value:    sessionID,
+		Path:     "/",
+		MaxAge:   86400,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+	})
 
 	c.JSON(status, utils.SuccessResponse{
 		Message: resp.Message,
