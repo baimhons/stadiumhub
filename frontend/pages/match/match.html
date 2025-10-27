@@ -266,6 +266,75 @@
             fetchMatches(1, teamId);
           }
 
+          // ตรวจสอบสถานะการ login ของผู้ใช้
+          async function checkLoginStatus() {
+            try {
+              const res = await fetch(`${API_BASE}/user/profile`, {
+                method: 'GET',
+                credentials: 'include'
+              });
+
+              if (!res.ok) {
+                showLoginButton();
+                return;
+              }
+
+              const data = await res.json();
+              if (data && data.data) {
+                showProfileAndLogout(data.data);
+              } else {
+                showLoginButton();
+              }
+            } catch (err) {
+              console.error('Error checking login status:', err);
+              showLoginButton();
+            }
+          }
+
+          // แสดงปุ่ม Login
+          function showLoginButton() {
+            const navRight = document.querySelector('.nav-right');
+            navRight.innerHTML = `
+              <button id="login-btn" class="user-login">Login</button>
+            `;
+            document.getElementById('login-btn').addEventListener('click', () => {
+              window.location.href = '../user/login.html';
+            });
+          }
+
+          // แสดงปุ่ม Profile + Logout
+          function showProfileAndLogout(user) {
+            const navRight = document.querySelector('.nav-right');
+            navRight.innerHTML = `
+              <button id="user-profile" class="user-profile">Hello, ${user.username || 'User'}</button>
+              <button id="logout-btn" class="user-logout">Logout</button>
+            `;
+
+            document.getElementById('user-profile').addEventListener('click', () => {
+              window.location.href = '../user/profile.html';
+            });
+
+            document.getElementById('logout-btn').addEventListener('click', async () => {
+              try {
+                const res = await fetch(`${API_BASE}/user/logout`, {
+                  method: 'POST',
+                  credentials: 'include'
+                });
+                if (res.ok) {
+                  alert('Logged out successfully!');
+                  showLoginButton();
+                } else {
+                  alert('Failed to logout');
+                }
+              } catch (err) {
+                console.error('Logout error:', err);
+                alert('Error logging out');
+              }
+            });
+          }
+
+
+
           //Pagination
           function updatePagination(page) {
             currentPage = page;
@@ -341,6 +410,7 @@
           document.addEventListener('DOMContentLoaded', () => {
             fetchTeams();
             fetchMatches(1);
+            checkLoginStatus();
           });
   </script>
 </body>
