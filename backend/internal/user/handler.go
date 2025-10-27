@@ -94,7 +94,7 @@ func (h *userHandlerImpl) LoginUser(c *gin.Context) {
 		Path:     "/",
 		MaxAge:   86400,
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   false,
 		SameSite: http.SameSiteNoneMode,
 	})
 

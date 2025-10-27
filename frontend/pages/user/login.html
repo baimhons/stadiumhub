@@ -4,7 +4,110 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>เข้าสู่ระบบ - จองสนามฟุตบอล</title>
-  <!-- <link rel="stylesheet" href="../../style/login.css" /> -->
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      padding: 40px;
+      width: 100%;
+      max-width: 440px;
+    }
+    h2 {
+      color: #333;
+      margin-bottom: 30px;
+      text-align: center;
+      font-size: 28px;
+    }
+    label {
+      display: block;
+      margin-bottom: 20px;
+      color: #555;
+      font-weight: 500;
+    }
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      margin-top: 8px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: border-color 0.3s;
+    }
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, opacity 0.3s;
+      margin-top: 10px;
+    }
+    .btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .muted {
+      text-align: center;
+      margin-top: 25px;
+      color: #666;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+    .muted a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .muted a:hover {
+      text-decoration: underline;
+    }
+    .console {
+      background: #1e1e1e;
+      color: #00ff00;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .error {
+      color: #ff4444 !important;
+    }
+    .success {
+      color: #00ff00 !important;
+    }
+  </style>
 </head>
 <body>
   <div class="card">
@@ -17,7 +120,7 @@
           type="text"
           id="loginEmail"
           name="username_or_email"
-          placeholder="you@example.com หรือ username"
+          placeholder="adminStadiumHub"
           autocomplete="username"
           required
         />
@@ -29,7 +132,7 @@
           type="password"
           id="loginPassword"
           name="password"
-          placeholder="อย่างน้อย 6 ตัว"
+          placeholder="••••••••"
           minlength="6"
           autocomplete="current-password"
           required
@@ -38,18 +141,13 @@
 
       <button class="btn" id="submitBtn" type="submit">เข้าสู่ระบบ</button>
 
-      <p class="muted hint">
-        Endpoint: <code>http://localhost:8080/api/v1/user/login</code>
-      </p>
-
       <p class="muted">
         ยังไม่มีบัญชี? <a href="register.html">สมัครสมาชิก</a><br />
-        <a href="../pages/index.html" class="link-danger">หน้าแรก</a>
+        <a href="../pages/index.html">หน้าแรก</a>
       </p>
     </form>
 
-    <!-- พื้นที่แสดงผลลัพธ์จากเซิร์ฟเวอร์ -->
-    <pre id="result" class="console">ผลลัพธ์จะปรากฏที่นี่...</pre>
+    <pre id="result" class="console">พร้อมเข้าสู่ระบบ...</pre>
   </div>
 
   <script>
@@ -59,18 +157,22 @@
 
     const API_BASE = 'https://stadiumhub.onrender.com/api/v1';
 
+    function log(message, isError = false) {
+      result.className = isError ? 'console error' : 'console';
+      result.textContent = message;
+      console.log(message);
+    }
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      // ถ้าไม่อยากปิด validation ของเบราว์เซอร์ ให้ลบ attribute `novalidate` ออกจาก <form>
       if (!form.checkValidity()) {
-        // ให้เบราว์เซอร์แสดงข้อความเตือนของมันเอง
         form.reportValidity();
         return;
       }
 
       submitBtn.disabled = true;
-      result.textContent = 'กำลังส่ง...';
+      log('🔄 กำลังเข้าสู่ระบบ...');
 
       const payload = {
         username_or_email: document.getElementById('loginEmail').value.trim(),
@@ -78,41 +180,73 @@
       };
 
       try {
-        const resp = await fetch(`${API_BASE}/user/login`, {
+        // ขั้นตอนที่ 1: Login
+        log('📤 กำลังส่งข้อมูลเข้าสู่ระบบ...');
+        const loginResp = await fetch(`${API_BASE}/user/login`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
           body: JSON.stringify(payload),
-          credentials: 'include', // ✅ สำคัญ ถ้าล็อกอินด้วย Cookie/Session
+          credentials: 'include', // สำคัญมาก!
         });
 
-        const profileResp = await fetch(`${API_BASE}/user/profile`, {
-        method: 'GET',
-        credentials: 'include' 
-      });
+        const loginData = await loginResp.json();
+        console.log('LOGIN Response:', loginResp.status, loginData);
 
-      const profileData = await profileResp.json();
-      console.log('PROFILE:', profileData);
-
-      result.textContent = JSON.stringify(profileData, null, 2);
-
-      if (profileResp.ok && profileData?.data) {
-        const user = profileData.data;
-
-        if (user.role === 'admin' || user.is_admin === true) {
-          window.location.href = '../admin/admin.html';
-        } else {
-          window.location.href = '../match/match.html';
+        if (!loginResp.ok) {
+          throw new Error(loginData.message || `Login failed: ${loginResp.status}`);
         }
-      } else {
-        result.textContent = 'ไม่สามารถดึงข้อมูลผู้ใช้จาก session ได้';
-      }
 
-    } catch (err) {
-      result.textContent = 'เกิดข้อผิดพลาด: ' + err.message;
-    } finally {
-      submitBtn.disabled = false;
-    }
-  });
+        log('✅ เข้าสู่ระบบสำเร็จ! กำลังดึงข้อมูลผู้ใช้...');
+
+        // ขั้นตอนที่ 2: ดึงข้อมูล Profile
+        const profileResp = await fetch(`${API_BASE}/user/profile`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json'
+          },
+          credentials: 'include' // สำคัญมาก!
+        });
+
+        const profileData = await profileResp.json();
+        console.log('PROFILE Response:', profileResp.status, profileData);
+
+        if (!profileResp.ok) {
+          throw new Error(profileData.message || `Profile fetch failed: ${profileResp.status}`);
+        }
+
+        // แสดงข้อมูลผู้ใช้
+        log(`✅ พบข้อมูลผู้ใช้:\n${JSON.stringify(profileData, null, 2)}`);
+
+        // ตรวจสอบ role และ redirect
+        if (profileData?.data) {
+          const user = profileData.data;
+          
+          setTimeout(() => {
+            if (user.role === 'admin' || user.is_admin === true) {
+              log('🔄 กำลังไปยังหน้า Admin...', false);
+              window.location.href = '../admin/admin.html';
+            } else {
+              log('🔄 กำลังไปยังหน้า Match...', false);
+              window.location.href = '../match/match.html';
+            }
+          }, 1000);
+        } else {
+          throw new Error('ไม่พบข้อมูลผู้ใช้ใน response');
+        }
+
+      } catch (err) {
+        console.error('Error:', err);
+        log(`❌ เกิดข้อผิดพลาด:\n${err.message}\n\nโปรดตรวจสอบ:\n- Username/Password ถูกต้องหรือไม่\n- Backend เปิด CORS ให้ localhost:5500\n- Cookie/Session configuration`, true);
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    // เติมค่า default สำหรับทดสอบ (ลบออกตอน production)
+    document.getElementById('loginEmail').value = 'adminStadiumHub';
   </script>
 </body>
 </html>
