@@ -107,9 +107,23 @@
     .success {
       color: #00ff00 !important;
     }
+    .env-badge {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      padding: 8px 16px;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
+  <div class="env-badge" id="envBadge">🔧 Loading...</div>
+  
   <div class="card">
     <h2>เข้าสู่ระบบ</h2>
 
@@ -154,8 +168,34 @@
     const form = document.getElementById('loginForm');
     const result = document.getElementById('result');
     const submitBtn = document.getElementById('submitBtn');
+    const envBadge = document.getElementById('envBadge');
 
-    const API_BASE = 'https://stadiumhub.onrender.com/api/v1';
+    // ✅ ตรวจสอบ environment และตั้ง API_BASE อัตโนมัติ
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                        window.location.hostname === '127.0.0.1';
+    
+    const API_BASE = isLocalhost 
+      ? 'http://localhost:8080/api/v1'  // Development
+      : 'https://stadiumhub.onrender.com/api/v1';  // Production
+
+    // แสดง environment badge
+    envBadge.textContent = isLocalhost ? '🔧 Development' : '🚀 Production';
+
+    // ✅ ระบบจัดการ Token แบบ in-memory (ไม่ใช้ localStorage)
+    let sessionToken = null;
+
+    function saveToken(token) {
+      sessionToken = token;
+      console.log('✅ Token saved in memory');
+    }
+
+    function getToken() {
+      return sessionToken;
+    }
+
+    function clearToken() {
+      sessionToken = null;
+    }
 
     function log(message, isError = false) {
       result.className = isError ? 'console error' : 'console';
@@ -172,7 +212,7 @@
       }
 
       submitBtn.disabled = true;
-      log('🔄 กำลังเข้าสู่ระบบ...');
+      log('🔄 กำลังเข้าสู่ระบบ...\nAPI: ' + API_BASE);
 
       const payload = {
         username_or_email: document.getElementById('loginEmail').value.trim(),
@@ -189,64 +229,125 @@
             'Accept': 'application/json'
           },
           body: JSON.stringify(payload),
-          credentials: 'include', // สำคัญมาก!
+          credentials: 'include',
         });
 
         const loginData = await loginResp.json();
-        console.log('LOGIN Response:', loginResp.status, loginData);
+        console.log('LOGIN Response:', {
+          status: loginResp.status,
+          headers: Object.fromEntries(loginResp.headers.entries()),
+          data: loginData
+        });
 
         if (!loginResp.ok) {
           throw new Error(loginData.message || `Login failed: ${loginResp.status}`);
         }
 
-        log('✅ เข้าสู่ระบบสำเร็จ! กำลังดึงข้อมูลผู้ใช้...');
+        // ✅ บันทึก token (ดึงจาก response body)
+        let token = null;
+        if (loginData.data?.session_id) {
+          token = loginData.data.session_id;
+        } else if (loginData.data?.token) {
+          token = loginData.data.token;
+        }
+
+        if (token) {
+          saveToken(token);
+          log(`✅ Login สำเร็จ!\nToken: ${token.substring(0, 30)}...\nMode: ${isLocalhost ? 'Cookie' : 'Token-based'}`);
+        } else {
+          log('✅ Login สำเร็จ! (Cookie-based)');
+        }
 
         // ขั้นตอนที่ 2: ดึงข้อมูล Profile
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        log('🔄 กำลังดึงข้อมูลผู้ใช้...');
+        
+        const headers = {
+          'Accept': 'application/json'
+        };
+        
+        // ✅ ส่ง token ใน Authorization header (บังคับใน production)
+        // reuse token variable declared earlier to avoid redeclaration error
+        token = getToken();
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+          console.log('📤 Sending Authorization:', headers['Authorization'].substring(0, 40) + '...');
+        } else if (!isLocalhost) {
+          throw new Error('No token available for production mode');
+        }
+
         const profileResp = await fetch(`${API_BASE}/user/profile`, {
           method: 'GET',
-          headers: {
-            'Accept': 'application/json'
-          },
-          credentials: 'include' // สำคัญมาก!
+          headers: headers,
+          credentials: 'include'
         });
 
         const profileData = await profileResp.json();
-        console.log('PROFILE Response:', profileResp.status, profileData);
+        console.log('PROFILE Response:', {
+          status: profileResp.status,
+          headers: Object.fromEntries(profileResp.headers.entries()),
+          data: profileData
+        });
 
         if (!profileResp.ok) {
           throw new Error(profileData.message || `Profile fetch failed: ${profileResp.status}`);
         }
 
         // แสดงข้อมูลผู้ใช้
-        log(`✅ พบข้อมูลผู้ใช้:\n${JSON.stringify(profileData, null, 2)}`);
+        const userInfo = JSON.stringify(profileData, null, 2);
+        log(`✅ พบข้อมูลผู้ใช้:\n${userInfo}`);
 
         // ตรวจสอบ role และ redirect
         if (profileData?.data) {
           const user = profileData.data;
           
           setTimeout(() => {
-            if (user.role === 'admin' || user.is_admin === true) {
-              log('🔄 กำลังไปยังหน้า Admin...', false);
-              window.location.href = '../admin/admin.html';
-            } else {
-              log('🔄 กำลังไปยังหน้า Match...', false);
-              window.location.href = '../match/match.html';
-            }
-          }, 1000);
+            const isAdmin = user.role === 'admin' || user.is_admin === true;
+            const targetPage = isAdmin ? '../admin/admin.html' : '../match/match.html';
+            
+            log(`🔄 กำลังไปยังหน้า ${isAdmin ? 'Admin' : 'Match'}...`, false);
+            
+            // Redirect
+            window.location.href = targetPage;
+          }, 1500);
         } else {
           throw new Error('ไม่พบข้อมูลผู้ใช้ใน response');
         }
 
       } catch (err) {
-        console.error('Error:', err);
-        log(`❌ เกิดข้อผิดพลาด:\n${err.message}\n\nโปรดตรวจสอบ:\n- Username/Password ถูกต้องหรือไม่\n- Backend เปิด CORS ให้ localhost:5500\n- Cookie/Session configuration`, true);
+        console.error('❌ Error:', err);
+        clearToken();
+        
+        let errorMsg = `❌ เกิดข้อผิดพลาด:\n${err.message}\n\n`;
+        
+        if (err.message.includes('Failed to fetch')) {
+          errorMsg += '🔍 ไม่สามารถเชื่อมต่อ Backend:\n';
+          errorMsg += `- ตรวจสอบว่า Backend ทำงานอยู่หรือไม่\n`;
+          errorMsg += `- URL: ${API_BASE}\n`;
+          errorMsg += `- ตรวจสอบ CORS configuration`;
+        } else if (err.message.includes('401') || err.message.includes('session')) {
+          errorMsg += '🔍 ปัญหา Authentication:\n';
+          errorMsg += `- Username/Password ไม่ถูกต้อง\n`;
+          errorMsg += `- หรือ Session/Cookie ไม่ทำงาน\n`;
+          errorMsg += `- ENV: ${isLocalhost ? 'Local (Cookie ใช้ได้)' : 'Production (ต้องใช้ Token!)'}`;
+        } else {
+          errorMsg += '🔍 โปรดตรวจสอบ Console สำหรับรายละเอียดเพิ่มเติม';
+        }
+        
+        log(errorMsg, true);
       } finally {
         submitBtn.disabled = false;
       }
     });
 
-    // เติมค่า default สำหรับทดสอบ (ลบออกตอน production)
-    document.getElementById('loginEmail').value = 'adminStadiumHub';
+    // เติมค่า default สำหรับทดสอบ
+    if (isLocalhost) {
+      document.getElementById('loginEmail').value = 'adminStadiumHub';
+      log('🔧 Development Mode\nAPI: ' + API_BASE + '\n\nพร้อมทดสอบ (Cookie-based)');
+    } else {
+      log('🚀 Production Mode\nAPI: ' + API_BASE + '\n\nพร้อมใช้งาน (Token-based)');
+    }
   </script>
 </body>
 </html>
