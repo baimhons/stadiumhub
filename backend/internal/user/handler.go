@@ -82,7 +82,7 @@ func (h *userHandlerImpl) LoginUser(c *gin.Context) {
 		return
 	}
 
-	sessionID, ok := dataMap["sessionID"].(string)
+	sessionID, ok := dataMap["session_id"].(string)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, utils.ErrorResponse{Message: "invalid session ID"})
 		return

@@ -81,6 +81,20 @@ body {
   color: #333;
 }
 
+#back-to-match {
+  width: fit-content;
+  margin: 20px;
+  padding: 10px;
+  cursor: pointer;
+}
+
+#back-to-match:hover {
+  background-color: #eef0f1;
+  border: 1px solid #eef0f1;
+  border-radius: 5px;
+  padding: 10px;
+}
+
 .zones-list {
   flex: 1;
   overflow-y: auto;

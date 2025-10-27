@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -58,6 +59,24 @@ func (a *AuthMiddlewareImpl) RequireAuth() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, utils.ErrorResponse{
 				Message: "session not found",
 				Error:   err,
+			})
+			return
+		}
+
+		// แยก sessionID|signature
+		parts := strings.Split(sessionID, "|")
+		if len(parts) != 2 {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, utils.ErrorResponse{
+				Message: "invalid cookie format",
+			})
+			return
+		}
+		sessionID, signature := parts[0], parts[1]
+
+		// ✅ ตรวจลายเซ็นก่อน
+		if !utils.VerifySession(sessionID, signature) {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, utils.ErrorResponse{
+				Message: "cookie signature invalid",
 			})
 			return
 		}

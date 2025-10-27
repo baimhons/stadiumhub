@@ -8,6 +8,7 @@ var ENV struct {
 	Stripe      `mapstructure:"stripe"`
 	AdminData   `mapstructure:"adminData"`
 	EmailKey    `mapstructure:"emailKey"`
+	SecretKey   `mapstructure:"secretKey"`
 }
 
 type Server struct {
@@ -15,12 +16,12 @@ type Server struct {
 }
 
 type Database struct {
-	Host     string `mapstructure:"host" defaultValue:"mysql"`
-	Port     int    `mapstructure:"port" defaultValue:"3306"`
+	Host     string `mapstructure:"host" defaultValue:"dpg-d3ugk38dl3ps73f50fh0-a.singapore-postgres.render.com"`
+	Port     int    `mapstructure:"port" defaultValue:"5432"`
 	User     string `mapstructure:"user" defaultValue:"stadiumhubuser"`
-	Password string `mapstructure:"password" defaultValue:"root"`
+	Password string `mapstructure:"password" defaultValue:"YpwWnlSfTBdnsJV9EtToStTrst37QI5M"`
 	Name     string `mapstructure:"name" defaultValue:"stadiumhub"`
-	Driver   string `mapstructure:"driver" defaultValue:"mysql"`
+	Driver   string `mapstructure:"driver" defaultValue:"postgres"`
 }
 
 type Redis struct {
@@ -43,6 +44,10 @@ type AdminData struct {
 	Password    string `mapstructure:"password" defaultValue:"4Dm1n3_7-0"`
 	PhoneNumber string `mapstructure:"phoneNumber" defaultValue:"012345678"`
 	Role        string `mapstructure:"role" defaultValue:"admin"`
+}
+
+type SecretKey struct {
+	SecretKey string `mapstructure:"secretKey" defaultValue:"s3cr3t_k3y_f0r_stad1um_hub7-0"`
 }
 
 type EmailKey struct {
