@@ -3,7 +3,9 @@ package response
 import "github.com/google/uuid"
 
 type LoginUserResponse struct {
-	Message string `json:"message,omitempty"`
+	SessionID string      `json:"session_id"`
+	Message   string      `json:"message,omitempty"`
+	User      interface{} `json:"user,omitempty"`
 }
 
 type UserProfileResponse struct {
