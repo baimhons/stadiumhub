@@ -18,7 +18,7 @@ type Server struct {
 type Database struct {
 	Host     string `mapstructure:"host" defaultValue:"dpg-d3ugk38dl3ps73f50fh0-a.singapore-postgres.render.com"`
 	Port     int    `mapstructure:"port" defaultValue:"5432"`
-	User     string `mapstructure:"user" defaultValue:"stadiumhubuser"`
+	User     string `mapstructure:"user" defaultValue:"stadiumuser"`
 	Password string `mapstructure:"password" defaultValue:"YpwWnlSfTBdnsJV9EtToStTrst37QI5M"`
 	Name     string `mapstructure:"name" defaultValue:"stadiumhub"`
 	Driver   string `mapstructure:"driver" defaultValue:"postgres"`
