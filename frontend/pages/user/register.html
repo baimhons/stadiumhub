@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>สมัครสมาชิก - จองสนามฟุตบอล</title>
+  <link rel="stylesheet" href="../../style/register.css" />
+</head>
+<body>
+  <div class="card" role="region" aria-labelledby="title">
+    <h1 id="title">สมัครสมาชิก</h1>
+
+
+    <form id="registerForm" novalidate>
+      <label for="regUsername">ชื่อผู้ใช้ (username)
+        <div class="fld">
+          <input type="text" id="regUsername" name="username" minlength="3" required
+                 autocomplete="username" placeholder="football123" />
+        </div>
+      </label>
+
+      <div class="row">
+        <label for="regFirstName">ชื่อจริง (first_name)
+          <div class="fld">
+            <input type="text" id="regFirstName" name="first_name" required
+                   autocomplete="given-name" placeholder="สมชาย" />
+          </div>
+        </label>
+
+        <label for="regLastName">นามสกุล (last_name)
+          <div class="fld">
+            <input type="text" id="regLastName" name="last_name" required
+                   autocomplete="family-name" placeholder="ใจดี" />
+          </div>
+        </label>
+      </div>
+
+      <label for="regEmail">อีเมล (email)
+        <div class="fld">
+          <input type="email" id="regEmail" name="email" required
+                 autocomplete="email" placeholder="you@example.com" />
+        </div>
+      </label>
+
+      <label for="regPhone">เบอร์โทร (phone_number)
+        <div class="fld">
+          <input type="tel" id="regPhone" name="phone_number" required
+                 pattern="[0-9]{9,15}" inputmode="numeric" autocomplete="tel"
+                 placeholder="0123456789" />
+          <small class="muted">กรอกเฉพาะตัวเลข 9–15 หลัก</small>
+        </div>
+      </label>
+
+      <div class="row">
+        <label for="regPassword">รหัสผ่าน (password)
+          <div class="fld dual">
+            <input type="password" id="regPassword" name="password" minlength="6" required
+                   autocomplete="new-password" placeholder="อย่างน้อย 6 ตัว" />
+            <button class="toggle" type="button" data-toggle="regPassword" aria-controls="regPassword" aria-pressed="false">แสดง</button>
+          </div>
+        </label>
+
+        <label for="regConfirm">ยืนยันรหัสผ่าน (confirm_password)
+          <div class="fld dual">
+            <input type="password" id="regConfirm" name="confirm_password" minlength="6" required
+                   autocomplete="new-password" placeholder="พิมพ์รหัสอีกครั้ง" />
+            <button class="toggle" type="button" data-toggle="regConfirm" aria-controls="regConfirm" aria-pressed="false">แสดง</button>
+          </div>
+        </label>
+      </div>
+
+      <div class="toolbar">
+        <button class="btn" id="registerBtn" type="submit">สมัครสมาชิก</button>
+        <div>
+          <a class="btn-ghost" href="login.html">เข้าสู่ระบบ</a>
+        </div>
+      </div>
+    </form> 
+
+    <pre id="console" class="console" aria-live="polite"></pre>
+
+    <p class="foot">
+      มีบัญชีแล้ว? <a class="link" href="login.html">เข้าสู่ระบบ</a> ·
+      <a class="link" href="../pages/index.html">หน้าแรก</a>
+    </p>
+  </div>
+
+  <script>
+    const BASE_URL = 'http://localhost:8080/api/v1';
+
+    const $ = (sel) => document.querySelector(sel);
+    const consoleBox = $('#console');
+    const form = $('#registerForm');
+    const btn = $('#registerBtn');
+
+    const fields = {
+      username:    $('#regUsername'),
+      first_name:  $('#regFirstName'),
+      last_name:   $('#regLastName'),
+      email:       $('#regEmail'),
+      phone_number:$('#regPhone'),
+      password:    $('#regPassword'),
+      confirm_password: $('#regConfirm'),
+    };
+
+    function logOK(msg, data){
+      if(!consoleBox) return; // กันเผื่อ
+      consoleBox.innerHTML =
+        `<div class="msg ok">${msg}</div>` +
+        (data ? `\n${escapeHtml(JSON.stringify(data, null, 2))}` : '');
+      consoleBox.classList.remove('error');
+      consoleBox.classList.add('ok');
+    }
+    function logErr(msg, data){
+      if(!consoleBox) return;
+      consoleBox.innerHTML =
+        `<div class="msg err">${msg}</div>` +
+        (data ? `\n${escapeHtml(JSON.stringify(data, null, 2))}` : '');
+      consoleBox.classList.remove('ok');
+      consoleBox.classList.add('error');
+    }
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, m =>
+        ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    // ปุ่มโชว์/ซ่อนรหัสผ่าน + aria-pressed
+    document.querySelectorAll('.toggle').forEach(tg=>{
+      tg.addEventListener('click', ()=>{
+        const id = tg.dataset.toggle;
+        const inp = document.getElementById(id);
+        const type = inp.getAttribute('type') === 'password' ? 'text' : 'password';
+        inp.setAttribute('type', type);
+        const show = (type !== 'password');
+        tg.textContent = show ? 'ซ่อน' : 'แสดง';
+        tg.setAttribute('aria-pressed', String(show));
+        inp.focus();
+      });
+    });
+
+    // เตือนทันทีถ้ารหัสผ่านไม่ตรง
+    fields.confirm_password.addEventListener('input', syncPwdValidity);
+    fields.password.addEventListener('input', syncPwdValidity);
+    function syncPwdValidity(){
+      const same = fields.password.value === fields.confirm_password.value;
+      fields.confirm_password.setCustomValidity(same ? '' : 'รหัสผ่านไม่ตรงกัน');
+    }
+
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+
+      if(!form.checkValidity()){
+        form.reportValidity();
+        return;
+      }
+
+      ['username','first_name','last_name','email','phone_number'].forEach(k=>{
+        fields[k].value = fields[k].value.trim();
+      });
+
+      if(fields.password.value !== fields.confirm_password.value){
+        logErr('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน');
+        fields.confirm_password.focus();
+        return;
+      }
+
+      const payload = {
+        username: fields.username.value,
+        first_name: fields.first_name.value,
+        last_name: fields.last_name.value,
+        email: fields.email.value,
+        password: fields.password.value,
+        confirm_password: fields.confirm_password.value,
+        phone_number: fields.phone_number.value,
+      };
+
+      for (const [k,v] of Object.entries(payload)){
+        if(v === '' || v == null){
+          logErr(`ข้อมูล "${k}" ห้ามเว้นว่าง`);
+          return;
+        }
+      }
+
+      btn.disabled = true;
+      btn.setAttribute('aria-busy','true');
+      logOK('กำลังสมัครสมาชิก...');
+
+      try{
+        const resp = await fetch(`${BASE_URL}/user/register`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(payload),
+        });
+
+        let data = null;
+        const txt = await resp.text();
+        try{ data = JSON.parse(txt); } catch{ data = { raw: txt }; }
+
+        if(resp.ok){
+          logOK('สมัครสมาชิกสำเร็จ!', data);
+          alert('สมัครสมาชิกสำเร็จ! กำลังไปหน้าเข้าสู่ระบบ...');
+          location.href = 'login.html';
+          return;
+        }
+
+        const msg = (data && (data.message || data.error || data.detail)) ||
+                    `สมัครไม่สำเร็จ (HTTP ${resp.status})`;
+        logErr(msg, data);
+
+      }catch(err){
+        logErr('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + err.message);
+      }finally{
+        btn.disabled = false;
+        btn.removeAttribute('aria-busy');
+      }
+    });
+  </script>
+</body>
+</html>

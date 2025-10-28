@@ -4,51 +4,139 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>User Profile</title>
-  <style>
-    body { font-family: "Segoe UI", sans-serif; background:#f6f8fa; display:flex; align-items:center; justify-content:center; height:100vh; margin:0; }
-    .card { background:white; padding:24px; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.08); width:400px; }
-    h1 { font-size:20px; margin:0 0 16px; text-align:center; }
-    pre { background:#f3f4f6; padding:12px; border-radius:8px; font-size:13px; white-space:pre-wrap; word-wrap:break-word; }
-    button { margin-top:16px; width:100%; padding:10px; border-radius:8px; border:0; background:#2563eb; color:white; font-weight:600; cursor:pointer; }
-    button:hover { background:#1e40af; }
-  </style>
+  <link rel="stylesheet" href="../../style/profile.css" />
+
 </head>
 <body>
   <div class="card">
-    <h1>📋 User Profile</h1>
-    <button id="getProfileBtn">ดึงข้อมูลโปรไฟล์</button>
-    <pre id="result">ยังไม่ได้ดึงข้อมูล...</pre>
+    <h1>โปรไฟล์ผู้ใช้</h1>
+    <div id="content" class="muted">กำลังโหลดข้อมูล...</div>
+    <div class="actions">
+      <button id="editBtn" class="warn">แก้ไขข้อมูล</button>
+      <button id="reloadBtn">รีเฟรช</button>
+      <button id="logoutBtn" class="secondary">ออกจากระบบ</button>
+    </div>
   </div>
 
   <script>
-    const btn = document.getElementById('getProfileBtn');
-    const result = document.getElementById('result');
+    const contentEl = document.getElementById('content');
+    const reloadBtn = document.getElementById('reloadBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const editBtn = document.getElementById('editBtn');
 
-    btn.addEventListener('click', async () => {
-      result.textContent = "กำลังโหลด...";
-      btn.disabled = true;
+    const API_BASE = 'http://localhost:8080/api/v1';
 
+    function renderError(msg, extra) {
+      const detail = extra ? `\n\nรายละเอียด:\n${extra}` : '';
+      contentEl.classList.remove('muted');
+      contentEl.innerHTML = `<div class="error">❌ โหลดไม่สำเร็จ: ${msg}${detail}</div>`;
+    }
+
+    function pickFields(raw) {
+      const src = raw?.data && typeof raw.data === 'object' ? raw.data : raw || {};
+      return {
+        username: src.username ?? '-',
+        first_name: src.first_name ?? '-',
+        last_name: src.last_name ?? '-',
+        email: src.email ?? '-',
+        phone_number: src.phone_number ?? '-'
+      };
+    }
+
+    function renderProfile(p) {
+      contentEl.classList.remove('muted');
+      contentEl.innerHTML = `
+        <div class="info">
+          <div class="item"><span>Username</span><span>${p.username}</span></div>
+          <div class="item"><span>ชื่อ</span><span>${p.first_name}</span></div>
+          <div class="item"><span>นามสกุล</span><span>${p.last_name}</span></div>
+          <div class="item"><span>อีเมล</span><span>${p.email}</span></div>
+          <div class="item"><span>เบอร์โทร</span><span>${p.phone_number}</span></div>
+        </div>
+      `;
+    }
+
+    async function loadProfile() {
+      contentEl.classList.add('muted');
+      contentEl.textContent = 'กำลังโหลดข้อมูล...';
       try {
-        const res = await fetch("http://localhost:8080/api/v1/user/profile", {
-          method: "GET",
-          credentials: "include", // ✅ สำคัญ เพื่อส่ง cookie session_id ไปด้วย
+        const res = await fetch(`${API_BASE}/user/profile`, {
+          method: 'GET',
+          mode: 'cors',
+          credentials: 'include',
+          headers: { 'Accept': 'application/json' }
         });
 
+        const rawText = await res.text();
+        let json = null;
+        try { json = rawText ? JSON.parse(rawText) : null; } catch {}
+
         if (!res.ok) {
-          const text = await res.text();
-          result.textContent = `HTTP ${res.status}: ${text}`;
+          renderError(`HTTP ${res.status}`, rawText || '(ว่าง)');
           return;
         }
 
-        const data = await res.json();
-        result.textContent = JSON.stringify(data, null, 2);
+        const picked = pickFields(json || {});
+        renderProfile(picked);
 
       } catch (err) {
-        result.textContent = "เกิดข้อผิดพลาด: " + err.message;
-      } finally {
-        btn.disabled = false;
+        renderError(err.message);
       }
+    }
+
+    async function logout() {
+      try {
+        const res = await fetch(`${API_BASE}/user/logout`, {
+          method: 'POST',
+          mode: 'cors',
+          credentials: 'include',
+          headers: { 'Accept': 'application/json' }
+        });
+        if (res.ok) {
+          location.reload();
+        } else {
+          const text = await res.text();
+          alert(`ออกจากระบบไม่สำเร็จ: HTTP ${res.status} - ${text}`);
+        }
+      } catch (e) {
+        alert('ออกจากระบบไม่สำเร็จ: ' + e.message);
+      }
+    }
+
+    function goToUpdate() {
+      const returnUrl = encodeURIComponent(location.pathname.replace(/[^/]+$/, 'profile.html'));
+      location.href = `update_profile.html?return=${returnUrl}`;
+    }
+
+    reloadBtn.addEventListener('click', loadProfile);
+    logoutBtn.addEventListener('click', logout);
+    editBtn.addEventListener('click', goToUpdate);
+
+    loadProfile();
+
+    async function logout() {
+  try {
+    const res = await fetch(`${API_BASE}/user/logout`, {
+      method: 'POST',
+      mode: 'cors',
+      credentials: 'include',
+      headers: { 'Accept': 'application/json' }
     });
+
+    if (res.ok) {
+      // ไปหน้า login.html หลังออกจากระบบสำเร็จ
+      location.href = 'login.html';
+    } else {
+      const text = await res.text();
+      alert(`ออกจากระบบไม่สำเร็จ: HTTP ${res.status} - ${text}`);
+    }
+  } catch (e) {
+    alert('ออกจากระบบไม่สำเร็จ: ' + e.message);
+  }
+}
+
+
   </script>
+
 </body>
 </html>

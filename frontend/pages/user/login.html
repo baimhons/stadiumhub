@@ -38,79 +38,86 @@
 
       <button class="btn" id="submitBtn" type="submit">เข้าสู่ระบบ</button>
 
-      <p class="muted hint">
-        Endpoint: <code>http://localhost:8080/api/v1/user/login</code>
-      </p>
-
       <p class="muted">
         ยังไม่มีบัญชี? <a href="register.html">สมัครสมาชิก</a><br />
         <a href="../pages/index.html" class="link-danger">หน้าแรก</a>
       </p>
     </form>
-
-    <!-- พื้นที่แสดงผลลัพธ์จากเซิร์ฟเวอร์ -->
-    <pre id="result" class="console">ผลลัพธ์จะปรากฏที่นี่...</pre>
   </div>
 
-  <script>
-    const form = document.getElementById('loginForm');
-    const result = document.getElementById('result');
-    const submitBtn = document.getElementById('submitBtn');
+<script>
+  const form = document.getElementById('loginForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const API_BASE = 'https://stadiumhub.onrender.com/api/v1';
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
 
-      // ถ้าไม่อยากปิด validation ของเบราว์เซอร์ ให้ลบ attribute `novalidate` ออกจาก <form>
-      if (!form.checkValidity()) {
-        // ให้เบราว์เซอร์แสดงข้อความเตือนของมันเอง
-        form.reportValidity();
+    // เปลี่ยนสภาวะปุ่มระหว่างส่งคำขอ
+    const originalBtnText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'กำลังเข้าสู่ระบบ...';
+
+    const payload = {
+      username_or_email: document.getElementById('loginEmail').value.trim(),
+      password: document.getElementById('loginPassword').value,
+    };
+
+    try {
+      // เรียก login
+        const loginResp = await fetch(`${API_BASE}/user/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        credentials: 'include', // เผื่อเซิร์ฟเวอร์ตั้งค่า session cookie
+      });
+
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        alert(errData.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
         return;
       }
 
-      submitBtn.disabled = true;
-      result.textContent = 'กำลังส่ง...';
-
-      const payload = {
-        username_or_email: document.getElementById('loginEmail').value.trim(),
-        password: document.getElementById('loginPassword').value,
-      };
-
-      try {
-        const resp = await fetch('http://localhost:8080/api/v1/user/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-          credentials: 'include', // ✅ สำคัญ ถ้าล็อกอินด้วย Cookie/Session
-        });
-
-        const profileResp = await fetch('http://localhost:8080/api/v1/user/profile', {
+      // ดึงข้อมูลโปรไฟล์หลังเข้าสู่ระบบสำเร็จ
+      const profileResp = await fetch(`${API_BASE}/user/profile`, {
         method: 'GET',
-        credentials: 'include' 
+        credentials: 'include',
       });
 
+      if (!profileResp.ok) {
+        alert('ไม่สามารถดึงข้อมูลผู้ใช้จาก session ได้');
+        return;
+      }
+
       const profileData = await profileResp.json();
+      // เก็บ log ไว้ดูในคอนโซล (ไม่แสดงหน้า)
       console.log('PROFILE:', profileData);
 
-      result.textContent = JSON.stringify(profileData, null, 2);
+      const user = profileData?.data;
+      if (!user) {
+        alert('ไม่พบข้อมูลผู้ใช้ในระบบ');
+        return;
+      }
 
-      if (profileResp.ok && profileData?.data) {
-        const user = profileData.data;
-
-        if (user.role === 'admin' || user.is_admin === true) {
-          window.location.href = '../admin/admin.html';
-        } else {
-          window.location.href = '../match/match.html';
-        }
+      // เปลี่ยนเส้นทางตามสิทธิ์ผู้ใช้
+      if (user.role === 'admin' || user.is_admin === true) {
+        window.location.href = '../admin/admin.html';
       } else {
-        result.textContent = 'ไม่สามารถดึงข้อมูลผู้ใช้จาก session ได้';
+        window.location.href = '../match/match.html';
       }
 
     } catch (err) {
-      result.textContent = 'เกิดข้อผิดพลาด: ' + err.message;
+      alert('เกิดข้อผิดพลาด: ' + (err?.message || String(err)));
     } finally {
       submitBtn.disabled = false;
+      submitBtn.textContent = originalBtnText;
     }
   });
-  </script>
+</script>
+
 </body>
 </html>
