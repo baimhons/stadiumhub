@@ -5,6 +5,166 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Seat Booking</title>
   <link rel="stylesheet" href="../../style/styles_booking.css">
+  <style>
+    /* Payment Confirmation Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 35px;
+      max-width: 480px;
+      width: 90%;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-title {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .modal-warning {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      text-align: left;
+    }
+
+    .modal-warning-title {
+      font-weight: 600;
+      color: #856404;
+      margin-bottom: 5px;
+      font-size: 16px;
+    }
+
+    .modal-warning-text {
+      color: #856404;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .modal-amount {
+      background: rgb(206, 206, 206);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin: 20px 0;
+    }
+
+    .modal-amount-label {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-bottom: 5px;
+    }
+
+    .modal-amount-value {
+      font-size: 38px;
+      font-weight: 700;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 25px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 14px 28px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .modal-btn-confirm {
+      background:rgb(9, 170, 81);
+      color: white;
+    }
+
+    .modal-btn-confirm:hover:not(:disabled) {
+      background-color: rgb(6, 143, 68);
+    }
+
+    .modal-btn-cancel {
+      background: #f8f9fa;
+      color: #666;
+    }
+
+    .modal-btn-cancel:hover:not(:disabled) {
+      background: #e9ecef;
+      border-color: #ced4da;
+    }
+
+    .modal-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .modal-loading {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top: 3px solid white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 600px) {
+      .modal-buttons {
+        flex-direction: column;
+      }
+      
+      .modal-amount-value {
+        font-size: 32px;
+      }
+    }
+  </style>
 </head>
 <body>
    <header class="site-header">
@@ -53,224 +213,339 @@
     </section>
   </main>
 
+  <!-- Payment Confirmation Modal -->
+  <div id="payment-modal" class="modal-overlay">
+    <div class="modal-content">
+      <h2 class="modal-title">Confirm Your Payment</h2>
+      
+      <div class="modal-warning">
+        <div class="modal-warning-title">Please paid within 30 minutes</div>
+        <div class="modal-warning-text">
+          if you do not pay within the time limit, your booking will be automatically canceled.
+        </div>
+      </div>
+
+      <div class="modal-amount">
+        <div class="modal-amount-label">Total Price</div>
+        <div class="modal-amount-value" id="modal-amount">0 ฿</div>
+      </div>
+
+      <div class="modal-buttons">
+        <button id="modal-cancel" class="modal-btn modal-btn-cancel">
+          cancel
+        </button>
+        <button id="modal-confirm" class="modal-btn modal-btn-confirm">
+          Confirm and Pay
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const API_BASE = 'https://api.stadiumhub.onrender.com/api/v1';
-    const urlParams = new URLSearchParams(window.location.search);
-    const matchId = urlParams.get('match_id');
-    const teamId = urlParams.get('team_id');
+    const API_BASE = 'https://stadiumhub.onrender.com/api/v1';
+    const urlParams = new URLSearchParams(window.location.search);
+    const matchId = urlParams.get('match_id');
+    const teamId = urlParams.get('team_id');
     const profile = document.getElementById('user-profile');
 
-    let selectedSeats = [];
-    let currentZone = null;
+    let selectedSeats = [];
+    let currentZone = null;
 
-    // Fetch zones
-    async function loadZones() {
-        try {
-            const res = await fetch(`${API_BASE}/zone/${matchId}`);
-            if (!res.ok) throw new Error('Failed to load zones');
-            
-            const data = await res.json();
-            const zones = data.data;
-            
-            const zonesList = document.getElementById('zones-list');
-            zonesList.innerHTML = '';
+    // Fetch zones
+    async function loadZones() {
+        try {
+            const res = await fetch(`${API_BASE}/zone/${matchId}`);
+            if (!res.ok) throw new Error('Failed to load zones');
+            
+            const data = await res.json();
+            const zones = data.data;
+            
+            const zonesList = document.getElementById('zones-list');
+            zonesList.innerHTML = '';
 
-            zones.forEach(zone => {
-            const zoneItem = document.createElement('div');
-            zoneItem.className = 'zone-item';
-            zoneItem.innerHTML = `
-                <span class="zone-name">${zone.name}</span>
-                <span class="zone-price">${zone.team.Price} THB</span>
-            `;
-            zoneItem.onclick = (event) => selectZone(zone, event);
-            zonesList.appendChild(zoneItem);
-            });
-        } catch (err) {
-            console.error(err);
-            document.getElementById('zones-list').innerHTML = 
-            `<p class="error">Failed to load zones</p>`;
-        }
-    }
-
-    // Select zone and load seats
-    async function selectZone(zone, event) {
-      currentZone = zone;
-      selectedSeats = []; // เคลียร์ที่นั่งที่เลือกเมื่อเปลี่ยนโซน
-      updateSummary(); // อัปเดตสรุปเป็น 0
-      document.getElementById('selected-zone-name').textContent = zone.name;
-      document.getElementById('empty-state').style.display = 'none';
-      document.getElementById('seat-selection').style.display = 'block';
-      
-      // Highlight selected zone
-      document.querySelectorAll('.zone-item').forEach(item => {
-        item.classList.remove('active');
-      });
-      event.target.closest('.zone-item').classList.add('active'); 
-      
-    loadSeats(zone.id);
+            zones.forEach(zone => {
+            const zoneItem = document.createElement('div');
+            zoneItem.className = 'zone-item';
+            zoneItem.innerHTML = `
+                <span class="zone-name">${zone.name}</span>
+                <span class="zone-price">${zone.team.Price} THB</span>
+            `;
+            zoneItem.onclick = (event) => selectZone(zone, event);
+            zonesList.appendChild(zoneItem);
+            });
+        } catch (err) {
+            console.error(err);
+            document.getElementById('zones-list').innerHTML = 
+            `<p class="error">Failed to load zones</p>`;
+        }
     }
 
-        // Load seats for selected zone
-        async function loadSeats(zoneId) {
-            try {
-                console.log('Fetching seats for:', { matchId, teamId, zoneId });
+    // Select zone and load seats
+    async function selectZone(zone, event) {
+      currentZone = zone;
+      selectedSeats = [];
+      updateSummary();
+      document.getElementById('selected-zone-name').textContent = zone.name;
+      document.getElementById('empty-state').style.display = 'none';
+      document.getElementById('seat-selection').style.display = 'block';
+      
+      // Highlight selected zone
+      document.querySelectorAll('.zone-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      event.target.closest('.zone-item').classList.add('active'); 
+      
+      loadSeats(zone.id);
+    }
 
-                const seatsContainer = document.getElementById('seats-container');
-                seatsContainer.innerHTML = '<div class="loading-spinner">Loading seats...</div>';
-                
-                const res = await fetch(
-                    `${API_BASE}/seat/available?match_id=${matchId}&team_id=${teamId}&zone_id=${zoneId}`
-                );
-                console.log('Response status:', res.status);
-                
-                if (!res.ok) throw new Error('Failed to load seats');
-                
-                const json = await res.json();
-                console.log('Seat response JSON:', json);
-                
-                const seats = Array.isArray(json) ? json : json.data || [];
-                if (!Array.isArray(seats)) throw new Error('Seats is not an array');
-                
-                seatsContainer.innerHTML = '';
-                const seatsByRow = {};
-                
-                seats.forEach(seat => {
-                    if (!seat.ID || typeof seat.ID !== 'string' || seat.ID.length < 5) {
-                        console.warn(`Seat ${seat.SeatNo || 'Unknown'} is missing a valid 'ID' and will be skipped.`);
-                        return; 
-                    }
-                    
-                    seat.id = seat.ID; 
+    // Load seats for selected zone
+    async function loadSeats(zoneId) {
+        try {
+            console.log('Fetching seats for:', { matchId, teamId, zoneId });
 
-                    const rowKey = seat.SeatNo?.split('-')[0] || 'unknown';
-                    if (!seatsByRow[rowKey]) seatsByRow[rowKey] = [];
-                    seatsByRow[rowKey].push(seat);
+            const seatsContainer = document.getElementById('seats-container');
+            seatsContainer.innerHTML = '<div class="loading-spinner">Loading seats...</div>';
+            
+            const res = await fetch(
+                `${API_BASE}/seat/available?match_id=${matchId}&team_id=${teamId}&zone_id=${zoneId}`
+            );
+            console.log('Response status:', res.status);
+            
+            if (!res.ok) throw new Error('Failed to load seats');
+            
+            const json = await res.json();
+            console.log('Seat response JSON:', json);
+            
+            const seats = Array.isArray(json) ? json : json.data || [];
+            if (!Array.isArray(seats)) throw new Error('Seats is not an array');
+            
+            seatsContainer.innerHTML = '';
+            const seatsByRow = {};
+            
+            seats.forEach(seat => {
+                if (!seat.ID || typeof seat.ID !== 'string' || seat.ID.length < 5) {
+                    console.warn(`Seat ${seat.SeatNo || 'Unknown'} is missing a valid 'ID' and will be skipped.`);
+                    return; 
+                }
+                
+                seat.id = seat.ID; 
+
+                const rowKey = seat.SeatNo?.split('-')[0] || 'unknown';
+                if (!seatsByRow[rowKey]) seatsByRow[rowKey] = [];
+                seatsByRow[rowKey].push(seat);
+            });
+
+            Object.keys(seatsByRow).sort().forEach(row => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'seat-row';
+                seatsByRow[row].forEach(seat => {
+                    const seatBtn = document.createElement('button');
+                    seatBtn.className = 'seat available';
+                    seatBtn.textContent = seat.SeatNo || '?';
+                    seatBtn.onclick = () => toggleSeat(seat, seatBtn);
+                    rowDiv.appendChild(seatBtn);
                 });
+                seatsContainer.appendChild(rowDiv);
+            });
 
-                // ส่วนที่เหลือของโค้ดการแสดงผลยังคงเดิม
-                Object.keys(seatsByRow).sort().forEach(row => {
-                    const rowDiv = document.createElement('div');
-                    rowDiv.className = 'seat-row';
-                    seatsByRow[row].forEach(seat => {
-                        const seatBtn = document.createElement('button');
-                        seatBtn.className = 'seat available';
-                        seatBtn.textContent = seat.SeatNo || '?';
-                        seatBtn.onclick = () => toggleSeat(seat, seatBtn);
-                        rowDiv.appendChild(seatBtn);
-                    });
-                    seatsContainer.appendChild(rowDiv);
-                });
-
-            } catch (err) {
-                console.error('Error loading seats:', err);
-                document.getElementById('seats-container').innerHTML = 
-                `<p class="error">Failed to load seats: ${err.message}</p>`;
-            }
+        } catch (err) {
+            console.error('Error loading seats:', err);
+            document.getElementById('seats-container').innerHTML = 
+            `<p class="error">Failed to load seats: ${err.message}</p>`;
         }
+    }
 
+    // Toggle seat selection
+    function toggleSeat(seat, element) {
+      const MAX_SEATS = 6; 
+      const index = selectedSeats.findIndex(s => s.id === seat.id);
+      
+      if (index > -1) {
+        selectedSeats.splice(index, 1);
+        element.classList.remove('selected');
+      } else {
+        if (selectedSeats.length >= MAX_SEATS) {
+          alert(`สามารถเลือกที่นั่งได้สูงสุด ${MAX_SEATS} ที่นั่งเท่านั้น`);
+          return; 
+        }
+        selectedSeats.push(seat);
+        element.classList.add('selected');
+      }
+      
+      updateSummary();
+    }
 
-    // Toggle seat selection
-    function toggleSeat(seat, element) {
-      const MAX_SEATS = 6; 
-      const index = selectedSeats.findIndex(s => s.id === seat.id);
-      
-      if (index > -1) {
-        selectedSeats.splice(index, 1);
-        element.classList.remove('selected');
-      } else {
-        if (selectedSeats.length >= MAX_SEATS) {
-          alert(`สามารถเลือกที่นั่งได้สูงสุด ${MAX_SEATS} ที่นั่งเท่านั้น`);
-          return; 
-        }
-        selectedSeats.push(seat);
-        element.classList.add('selected');
-      }
-      
-      updateSummary();
-    }
+    // Update booking summary
+    function updateSummary() {
+      const count = selectedSeats.length;
+      const pricePerSeat = currentZone?.team?.Price || 0; 
+      const total = count * pricePerSeat;
+      
+      document.getElementById('selected-count').textContent = count;
+      document.getElementById('total-price').textContent = total.toLocaleString('en-US'); 
+      document.getElementById('confirm-booking').disabled = count === 0;
+    }
 
-    // Update booking summary
-    function updateSummary() {
-      const count = selectedSeats.length;
-      const pricePerSeat = currentZone?.team?.Price || 0; 
-      const total = count * pricePerSeat;
-      
-      document.getElementById('selected-count').textContent = count;
-      document.getElementById('total-price').textContent = total.toLocaleString('en-US'); 
-      document.getElementById('confirm-booking').disabled = count === 0;
-    }
+    // Back to zones
+    document.getElementById('back-to-zones').onclick = () => {
+      document.getElementById('seat-selection').style.display = 'none';
+      document.getElementById('empty-state').style.display = 'flex';
+      selectedSeats = [];
+      currentZone = null;
+      document.querySelectorAll('.zone-item').forEach(item => {
+        item.classList.remove('active');
+      });
+    };
 
-    // Back to zones
-    document.getElementById('back-to-zones').onclick = () => {
-      document.getElementById('seat-selection').style.display = 'none';
-      document.getElementById('empty-state').style.display = 'flex';
-      selectedSeats = [];
-      currentZone = null;
-      document.querySelectorAll('.zone-item').forEach(item => {
-        item.classList.remove('active');
-      });
-    };
+    document.getElementById('back-to-match').onclick = () => { 
+        window.location.href = `../match/match.html`;
+    };
 
-       document.getElementById('back-to-match').onclick = () => { 
-            window.location.href = `../match/match.html`;
-        };
+    // Show payment modal
+    function showPaymentModal() {
+      const totalAmount = selectedSeats.length * (currentZone?.team?.Price || 0);
+      document.getElementById('modal-amount').textContent = totalAmount.toLocaleString('th-TH') + ' ฿';
+      document.getElementById('payment-modal').classList.add('active');
+    }
 
-    // Confirm booking
-    document.getElementById('confirm-booking').onclick = async () => {
-        if (selectedSeats.length === 0) {
-            alert('กรุณาเลือกที่นั่งอย่างน้อย 1 ที่นั่ง');
-            return;
-        }
-        const seatIdsToSend = selectedSeats
-                                .map(s => s.id)
-                                .filter(id => typeof id === 'string' && id.length > 0); 
+    // Hide payment modal
+    function hidePaymentModal() {
+      document.getElementById('payment-modal').classList.remove('active');
+    }
+
+    // Step 1: Show confirmation modal when clicking Confirm Booking
+    document.getElementById('confirm-booking').onclick = () => {
+        if (selectedSeats.length === 0) {
+            alert('กรุณาเลือกที่นั่งอย่างน้อย 1 ที่นั่ง');
+            return;
+        }
+        showPaymentModal();
+    };
+
+    // Step 2: Create booking AND payment when confirming in modal
+    document.getElementById('modal-confirm').onclick = async () => {
+        const confirmBtn = document.getElementById('modal-confirm');
+        const cancelBtn = document.getElementById('modal-cancel');
+        
+        // Validate seats
+        const seatIdsToSend = selectedSeats
+                                .map(s => s.id)
+                                .filter(id => typeof id === 'string' && id.length > 0);
+        
         if (seatIdsToSend.length === 0) {
-            alert('ไม่พบ ID ที่นั่งที่ถูกต้องสำหรับการจอง โปรดลองเลือกที่นั่งอื่นหรือติดต่อผู้ดูแลระบบ');
+            alert('ไม่พบ ID ที่นั่งที่ถูกต้อง');
+            hidePaymentModal();
             return;
         }
 
-        const payload = {
-            match_id: parseInt(matchId), 
-            seat_ids: seatIdsToSend 
-        };
+        // Disable buttons and show loading
+        confirmBtn.disabled = true;
+        cancelBtn.disabled = true;
+        confirmBtn.innerHTML = '<span class="modal-loading"></span> กำลังสร้างการจอง...';
 
-        console.log('Sending Booking Payload:', payload);
+        try {
+            // Step 2.1: Create booking first
+            const bookingPayload = {
+                match_id: parseInt(matchId),
+                seat_ids: seatIdsToSend
+            };
 
-        try {
-            const res = await fetch(`${API_BASE}/booking/create`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-                credentials: 'include' 
-            });
-            
-            if (!res.ok) {
-                const errorData = await res.json().catch(() => ({ message: 'Unknown error' }));
-                // แสดงข้อความ error ที่อ่านง่ายขึ้น
-                throw new Error(errorData.message || `Booking failed with status: ${res.status}`);
-            }
-            
-            alert('จองตั๋วสำเร็จแล้ว!');
-            window.location.reload(); 
-        } catch (err) {
-            console.error('Booking failed:', err);
-            alert('จองตั๋วไม่สำเร็จ: ' + err.message);
-        }
-    };
+            console.log('Creating booking:', bookingPayload);
 
-          profile.addEventListener('click', () => {
-                      window.location.href = '../user/profile.html';
-          });
+            const bookingRes = await fetch(`${API_BASE}/booking/create`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bookingPayload),
+                credentials: 'include'
+            });
 
-    // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
-      if (!matchId || !teamId) {
-        alert('Invalid booking parameters');
-        window.location.href = '../match/match.html';
-        return;
-      }
-      
-      loadZones();
-    });
-  </script>
+            if (!bookingRes.ok) {
+                const errorData = await bookingRes.json().catch(() => ({ message: 'Unknown error' }));
+                throw new Error(errorData.message || `Booking failed: ${bookingRes.status}`);
+            }
+
+            const bookingResponse = await bookingRes.json();
+            console.log('Booking created:', bookingResponse);
+
+            // Extract booking_id from response
+            const bookingId = bookingResponse.data?.booking_id || 
+                             bookingResponse.booking_id ||
+                             bookingResponse.data?.id;
+
+            if (!bookingId) {
+                throw new Error('Booking ID not found in response');
+            }
+
+            // Step 2.2: Create payment with the booking_id
+            confirmBtn.innerHTML = '<span class="modal-loading"></span> กำลังสร้างการชำระเงิน...';
+
+            const totalAmount = selectedSeats.length * (currentZone?.team?.Price || 0);
+            const paymentPayload = {
+                amount: totalAmount,
+                currency: 'thb',
+                booking_id: bookingId
+            };
+
+            console.log('Creating payment:', paymentPayload);
+
+            const paymentRes = await fetch(`${API_BASE}/payment/create`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(paymentPayload),
+                credentials: 'include'
+            });
+
+            if (!paymentRes.ok) {
+                const errorData = await paymentRes.json().catch(() => ({ message: 'Unknown error' }));
+                throw new Error(errorData.message || `Payment failed: ${paymentRes.status}`);
+            }
+
+            const paymentResponse = await paymentRes.json();
+            console.log('Payment created:', paymentResponse);
+
+            // Extract Stripe session URL
+            const sessionUrl = paymentResponse.data?.seesion_url?.session_url ||
+                              paymentResponse.data?.session_url;
+
+            if (!sessionUrl) {
+                throw new Error('Session URL not found in payment response');
+            }
+
+            // Step 2.3: Redirect to Stripe
+            console.log('Redirecting to:', sessionUrl);
+            window.location.href = sessionUrl;
+
+        } catch (err) {
+            console.error('Process failed:', err);
+            alert('เกิดข้อผิดพลาด: ' + err.message);
+            
+            // Re-enable buttons
+            confirmBtn.disabled = false;
+            cancelBtn.disabled = false;
+            confirmBtn.innerHTML = 'ยืนยันและชำระเงิน';
+            hidePaymentModal();
+        }
+    };
+
+    // Cancel payment
+    document.getElementById('modal-cancel').onclick = () => {
+        hidePaymentModal();
+    };
+
+    profile.addEventListener('click', () => {
+      window.location.href = '../user/profile.html';
+    });
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!matchId || !teamId) {
+        alert('Invalid booking parameters');
+        window.location.href = '../match/match.html';
+        return;
+      }
+      
+      loadZones();
+    });
+  </script>
+</body>
 </html>

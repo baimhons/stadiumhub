@@ -100,7 +100,8 @@ func (h *userHandlerImpl) LoginUser(c *gin.Context) {
 		MaxAge:   86400,
 		HttpOnly: true,
 		Secure:   !isLocalhost, // ✅ false สำหรับ localhost, true สำหรับ production
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteNoneMode,
+		Domain:   "stadiumhub-1.onrender.com",
 	})
 
 	// ส่ง session_id กลับไปใน response body ด้วย (สำหรับ Token-based)
@@ -151,16 +152,17 @@ func (h *userHandlerImpl) LogoutUser(c *gin.Context) {
 		return
 	}
 
-	// ลบ cookie
-	c.SetCookie(
-		"session_id",
-		"",
-		-1,
-		"/",
-		"",
-		false,
-		true,
-	)
+	isLocalhost := strings.Contains(c.Request.Host, "localhost") ||
+		strings.Contains(c.Request.Host, "127.0.0.1")
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "session_id",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   !isLocalhost,
+		SameSite: http.SameSiteNoneMode,
+	})
 
 	c.JSON(status, utils.SuccessResponse{
 		Message: "User logged out successfully",

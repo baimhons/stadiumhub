@@ -46,10 +46,6 @@
     </section>
   </main>
 
-  <footer class="site-footer">
-    <p>&copy; 2025 Football Matches. All rights reserved.</p>
-  </footer>
-
   <script>
         // DOM Elements
           const siteTitleEl = document.getElementById('site-title');
@@ -69,34 +65,44 @@
         let allTeams = [];
         let lastFetchedCount = 0; 
 
-          const API_BASE = 'https://api.stadiumhub.onrender.com/api/v1';
+          const API_BASE = 'https://stadiumhub.onrender.com/api/v1';
 
-          // Fetch Teams
-          async function fetchTeams() {
-            try {
-              teamsContainerEl.innerHTML = `<div class="loading-spinner">Loading teams...</div>`;
-              
-              const res = await fetch(`${API_BASE}/team/`, { 
-                method: "GET",
-                credentials: "include",
-              });
+         // Fetch Teams (using XMLHttpRequest)
+        function fetchTeams() {
+          teamsContainerEl.innerHTML = `<div class="loading-spinner">Loading teams...</div>`;
 
-              if (!res.ok) {
-                const text = await res.text();
-                throw new Error(`HTTP ${res.status}: ${text}`);
+          const xhr = new XMLHttpRequest();
+          xhr.open("GET", `${API_BASE}/team/`, true);
+          xhr.withCredentials = true; // เทียบเท่ากับ credentials: "include"
+
+          xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) { 
+              if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                  const data = JSON.parse(xhr.responseText);
+                  console.log("Teams data:", data);
+
+                  allTeams = data.data || [];
+                  displayTeams(allTeams);
+                  teamsContainerEl.setAttribute("data-loaded", "true");
+                } catch (err) {
+                  console.error("JSON parse error:", err);
+                  teamsContainerEl.innerHTML = `<p class="error-message">Invalid server response</p>`;
+                }
+              } else {
+                console.error("Error fetching teams:", xhr.status, xhr.responseText);
+                teamsContainerEl.innerHTML = `<p class="error-message">Failed to load teams: HTTP ${xhr.status}</p>`;
               }
-              
-              const data = await res.json();
-              console.log('Teams data:', data);
-
-              allTeams = data.data || [];
-              displayTeams(allTeams);
-              teamsContainerEl.setAttribute('data-loaded', 'true');
-            } catch (err) {
-              console.error('Error fetching teams:', err);
-              teamsContainerEl.innerHTML = `<p class="error-message">Failed to load teams: ${err.message}</p>`;
             }
-          }
+          };
+
+          xhr.onerror = function () {
+            teamsContainerEl.innerHTML = `<p class="error-message">Network error occurred</p>`;
+          };
+
+          xhr.send();
+        }
+
 
           ///Fetch Matches
           async function fetchMatches(page = 1, teamId = null) {

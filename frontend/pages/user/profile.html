@@ -24,7 +24,7 @@
     const btn = document.getElementById('getProfileBtn');
     const result = document.getElementById('result');
 
-    const API_BASE = 'https://api.stadiumhub.onrender.com/api/v1';
+    const API_BASE = 'https://stadiumhub.onrender.com/api/v1';
 
     btn.addEventListener('click', async () => {
       result.textContent = "กำลังโหลด...";
@@ -33,7 +33,7 @@
       try {
         const res = await fetch(`${API_BASE}/user/profile`, {
           method: "GET",
-          credentials: "include", // ✅ สำคัญ เพื่อส่ง cookie session_id ไปด้วย
+          credentials: "include",
         });
 
         if (!res.ok) {
