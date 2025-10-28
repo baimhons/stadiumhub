@@ -101,7 +101,6 @@ func (h *userHandlerImpl) LoginUser(c *gin.Context) {
 		HttpOnly: true,
 		Secure:   !isLocalhost, // ✅ false สำหรับ localhost, true สำหรับ production
 		SameSite: http.SameSiteNoneMode,
-		Domain:   "stadiumhub-1.onrender.com",
 	})
 
 	// ส่ง session_id กลับไปใน response body ด้วย (สำหรับ Token-based)
