@@ -46,10 +46,6 @@
     </section>
   </main>
 
-  <footer class="site-footer">
-    <p>&copy; 2025 Football Matches. All rights reserved.</p>
-  </footer>
-
   <script>
         // DOM Elements
           const siteTitleEl = document.getElementById('site-title');
@@ -71,32 +67,42 @@
 
           const API_BASE = 'https://stadiumhub.onrender.com/api/v1';
 
-          // Fetch Teams
-          async function fetchTeams() {
-            try {
-              teamsContainerEl.innerHTML = `<div class="loading-spinner">Loading teams...</div>`;
-              
-              const res = await fetch(`${API_BASE}/team/`, { 
-                method: "GET",
-                credentials: "include",
-              });
+         // Fetch Teams (using XMLHttpRequest)
+        function fetchTeams() {
+          teamsContainerEl.innerHTML = `<div class="loading-spinner">Loading teams...</div>`;
 
-              if (!res.ok) {
-                const text = await res.text();
-                throw new Error(`HTTP ${res.status}: ${text}`);
+          const xhr = new XMLHttpRequest();
+          xhr.open("GET", `${API_BASE}/team/`, true);
+          xhr.withCredentials = true; // เทียบเท่ากับ credentials: "include"
+
+          xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) { 
+              if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                  const data = JSON.parse(xhr.responseText);
+                  console.log("Teams data:", data);
+
+                  allTeams = data.data || [];
+                  displayTeams(allTeams);
+                  teamsContainerEl.setAttribute("data-loaded", "true");
+                } catch (err) {
+                  console.error("JSON parse error:", err);
+                  teamsContainerEl.innerHTML = `<p class="error-message">Invalid server response</p>`;
+                }
+              } else {
+                console.error("Error fetching teams:", xhr.status, xhr.responseText);
+                teamsContainerEl.innerHTML = `<p class="error-message">Failed to load teams: HTTP ${xhr.status}</p>`;
               }
-              
-              const data = await res.json();
-              console.log('Teams data:', data);
-
-              allTeams = data.data || [];
-              displayTeams(allTeams);
-              teamsContainerEl.setAttribute('data-loaded', 'true');
-            } catch (err) {
-              console.error('Error fetching teams:', err);
-              teamsContainerEl.innerHTML = `<p class="error-message">Failed to load teams: ${err.message}</p>`;
             }
-          }
+          };
+
+          xhr.onerror = function () {
+            teamsContainerEl.innerHTML = `<p class="error-message">Network error occurred</p>`;
+          };
+
+          xhr.send();
+        }
+
 
           ///Fetch Matches
           async function fetchMatches(page = 1, teamId = null) {
@@ -266,6 +272,75 @@
             fetchMatches(1, teamId);
           }
 
+          // ตรวจสอบสถานะการ login ของผู้ใช้
+          async function checkLoginStatus() {
+            try {
+              const res = await fetch(`${API_BASE}/user/profile`, {
+                method: 'GET',
+                credentials: 'include'
+              });
+
+              if (!res.ok) {
+                showLoginButton();
+                return;
+              }
+
+              const data = await res.json();
+              if (data && data.data) {
+                showProfileAndLogout(data.data);
+              } else {
+                showLoginButton();
+              }
+            } catch (err) {
+              console.error('Error checking login status:', err);
+              showLoginButton();
+            }
+          }
+
+          // แสดงปุ่ม Login
+          function showLoginButton() {
+            const navRight = document.querySelector('.nav-right');
+            navRight.innerHTML = `
+              <button id="login-btn" class="user-login">Login</button>
+            `;
+            document.getElementById('login-btn').addEventListener('click', () => {
+              window.location.href = '../user/login.html';
+            });
+          }
+
+          // แสดงปุ่ม Profile + Logout
+          function showProfileAndLogout(user) {
+            const navRight = document.querySelector('.nav-right');
+            navRight.innerHTML = `
+              <button id="user-profile" class="user-profile">Hello, ${user.username || 'User'}</button>
+              <button id="logout-btn" class="user-logout">Logout</button>
+            `;
+
+            document.getElementById('user-profile').addEventListener('click', () => {
+              window.location.href = '../user/profile.html';
+            });
+
+            document.getElementById('logout-btn').addEventListener('click', async () => {
+              try {
+                const res = await fetch(`${API_BASE}/user/logout`, {
+                  method: 'POST',
+                  credentials: 'include'
+                });
+                if (res.ok) {
+                  alert('Logged out successfully!');
+                  showLoginButton();
+                } else {
+                  alert('Failed to logout');
+                }
+              } catch (err) {
+                console.error('Logout error:', err);
+                alert('Error logging out');
+              }
+            });
+          }
+
+
+
           //Pagination
           function updatePagination(page) {
             currentPage = page;
@@ -341,6 +416,7 @@
           document.addEventListener('DOMContentLoaded', () => {
             fetchTeams();
             fetchMatches(1);
+            checkLoginStatus();
           });
   </script>
 </body>

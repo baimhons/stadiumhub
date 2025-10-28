@@ -20,14 +20,12 @@ var (
 	sessionMutex sync.RWMutex
 )
 
-// ฟังก์ชันช่วย set/get session
 func SetSession(sessionID string, userCtx models.UserContext, exp time.Duration) {
 	userCtxJSON, _ := json.Marshal(userCtx)
 	sessionMutex.Lock()
 	sessionStore[sessionID] = string(userCtxJSON)
 	sessionMutex.Unlock()
 
-	// ตั้งเวลาหมดอายุ
 	go func() {
 		time.Sleep(exp)
 		sessionMutex.Lock()
@@ -54,34 +52,59 @@ type AuthMiddlewareImpl struct{}
 
 func (a *AuthMiddlewareImpl) RequireAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		sessionID, err := c.Cookie("session_id")
-		if err != nil {
+		var sessionID string
+		var signature string
+
+		// 1. ลองอ่านจาก Cookie ก่อน (สำหรับ localhost)
+		cookieValue, err := c.Cookie("session_id")
+		if err == nil && cookieValue != "" {
+			// แยก sessionID|signature
+			parts := strings.Split(cookieValue, "|")
+			if len(parts) == 2 {
+				sessionID = parts[0]
+				signature = parts[1]
+			} else {
+				sessionID = cookieValue // ถ้าไม่มี signature
+			}
+		}
+
+		// 2. ถ้าไม่มี Cookie ลองอ่านจาก Authorization header (สำหรับ production)
+		if sessionID == "" {
+			authHeader := c.GetHeader("Authorization")
+			if authHeader != "" {
+				// ลบ "Bearer " prefix
+				token := strings.TrimPrefix(authHeader, "Bearer ")
+				token = strings.TrimSpace(token)
+
+				// แยก sessionID|signature (ถ้ามี)
+				parts := strings.Split(token, "|")
+				if len(parts) == 2 {
+					sessionID = parts[0]
+					signature = parts[1]
+				} else {
+					sessionID = token
+				}
+			}
+		}
+
+		// 3. ถ้ายังไม่มี session_id = Unauthorized
+		if sessionID == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, utils.ErrorResponse{
 				Message: "session not found",
-				Error:   err,
+				Error:   fmt.Errorf("no session_id in cookie or authorization header"),
 			})
 			return
 		}
 
-		// แยก sessionID|signature
-		parts := strings.Split(sessionID, "|")
-		if len(parts) != 2 {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, utils.ErrorResponse{
-				Message: "invalid cookie format",
-			})
-			return
-		}
-		sessionID, signature := parts[0], parts[1]
-
-		// ✅ ตรวจลายเซ็นก่อน
-		if !utils.VerifySession(sessionID, signature) {
+		// 4. ตรวจสอบลายเซ็น (ถ้ามี)
+		if signature != "" && !utils.VerifySession(sessionID, signature) {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, utils.ErrorResponse{
 				Message: "cookie signature invalid",
 			})
 			return
 		}
 
-		// ดึงข้อมูลจาก in-memory cache
+		// 5. ดึงข้อมูลจาก in-memory cache
 		userContextJSON, ok := getSession(sessionID)
 		if !ok {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, utils.ErrorResponse{
@@ -93,7 +116,9 @@ func (a *AuthMiddlewareImpl) RequireAuth() gin.HandlerFunc {
 
 		var userContext models.UserContext
 		if err := json.Unmarshal([]byte(userContextJSON), &userContext); err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("unmarshal error: %v", err)})
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"error": fmt.Sprintf("unmarshal error: %v", err),
+			})
 			return
 		}
 

@@ -2,6 +2,7 @@ package payment
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -57,9 +58,12 @@ func (ps *paymentServiceImpl) StripeSession(userID uuid.UUID, bookingID uuid.UUI
 			},
 			Quantity: stripe.Int64(1),
 		}},
-		SuccessURL: stripe.String("https://stadiumhub-1.onrender.com/pages/payment/success.html"),
-		CancelURL:  stripe.String("https://stadiumhub-1.onrender.com/pages/payment/cancel.html"),
-		ExpiresAt:  stripe.Int64(time.Now().Add(30 * time.Minute).Unix()),
+		SuccessURL: stripe.String(fmt.Sprintf(
+			"https://stadiumhub-1.onrender.com/pages/payment/success.html?booking_id=%s", bookingID.String(),
+		)),
+
+		CancelURL: stripe.String("https://stadiumhub-1.onrender.com/pages/payment/cancel.html"),
+		ExpiresAt: stripe.Int64(time.Now().Add(30 * time.Minute).Unix()),
 	}
 
 	s, err := session.New(params)

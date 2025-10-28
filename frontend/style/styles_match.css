@@ -152,7 +152,9 @@ section {
     gap: 1rem;
 }
 
-.user-profile {
+.user-profile,
+.user-login,
+.user-logout {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -455,14 +457,6 @@ section {
     padding: 3rem;
     color: #718096;
     font-weight: 500;
-}
-
-.site-footer {
-    background: white;
-    text-align: center;
-    padding: 1.5rem;
-    color: #4a5568;
-    border-top: 1px solid #e2e8f0;
 }
 
 /* Pseudo-classes */

@@ -1,11 +1,144 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Success</title>
+    <title>Payment Success - Stadium Hub</title>
+    <link rel="stylesheet" href="../../style/styles_success.css">
 </head>
 <body>
-    Success
+    <div class="success-container">
+        <div class="success-header">
+            <div class="success-icon">✓</div>
+            <h1>Payment Successfully !</h1>
+            <p>Thank for buy ticket form Stadium Hub</p>
+        </div>
+
+        <div class="success-body">
+            <div class="status-message">
+                <div id="status-updating" class="status-updating">
+                    <span class="loading-spinner"></span>
+                    Updating Status...
+                </div>
+                <div id="status-success" class="status-success">
+                    Updated
+                </div>
+                <div id="status-error" class="status-error">
+                    cannot update status please contact admi
+                </div>
+            </div>
+
+            <div class="booking-info">
+                <div class="info-row">
+                    <span class="info-label">Booking ID</span>
+                    <span class="info-value" id="booking-id-display">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Date</span>
+                    <span class="info-value" id="payment-date"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Status</span>
+                    <span class="info-value" id="booking-status">checking...</span>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <a href="../user/profile.html" class="btn btn-secondary">
+                    booking history
+                </a>
+                <a href="../match/match.html" class="btn btn-primary">
+                    back to match
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://stadiumhub.onrender.com/api/v1';
+
+        // Get booking_id from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const bookingId = urlParams.get('booking_id');
+
+        // Display current date and time
+        function displayPaymentDate() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            document.getElementById('payment-date').textContent = dateStr;
+        }
+
+        // Update booking status via API
+        async function updateBookingStatus() {
+            if (!bookingId) {
+                console.error('Booking ID not found in URL');
+                showStatusError('Booking ID not found');
+                return;
+            }
+
+            // Display booking ID
+            document.getElementById('booking-id-display').textContent = bookingId;
+
+            try {
+                console.log('Updating booking status for:', bookingId);
+
+                const response = await fetch(`${API_BASE}/booking/update-status/${bookingId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ 
+                        message: 'Unknown error' 
+                    }));
+                    throw new Error(errorData.message || `Update failed: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('Booking status updated:', result);
+
+                // Show success message
+                showStatusSuccess();
+
+            } catch (error) {
+                console.error('Failed to update booking status:', error);
+                showStatusError(error.message);
+            }
+        }
+
+        // Show success status
+        function showStatusSuccess() {
+            document.getElementById('status-updating').style.display = 'none';
+            document.getElementById('status-success').style.display = 'block';
+            document.getElementById('booking-status').textContent = 'Alrady paid';
+            document.getElementById('booking-status').style.color = '#15803d';
+        }
+
+        // Show error status
+        function showStatusError(message) {
+            document.getElementById('status-updating').style.display = 'none';
+            document.getElementById('status-error').style.display = 'block';
+            document.getElementById('status-error').textContent = message;
+            document.getElementById('booking-status').textContent = 'something went wrong';
+            document.getElementById('booking-status').style.color = '#991b1b';
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            displayPaymentDate();
+            
+            // Update booking status automatically
+            updateBookingStatus();
+        });
+    </script>
 </body>
 </html>

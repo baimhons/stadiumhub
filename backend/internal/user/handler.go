@@ -2,10 +2,10 @@ package user
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/baimhons/stadiumhub/internal/models"
 	"github.com/baimhons/stadiumhub/internal/user/api/request"
-	"github.com/baimhons/stadiumhub/internal/user/api/response"
 	"github.com/baimhons/stadiumhub/internal/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -88,12 +88,28 @@ func (h *userHandlerImpl) LoginUser(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("session_id", sessionID, 86400, "/", "", false, true)
+	// ตรวจสอบว่าเป็น localhost หรือไม่
+	isLocalhost := strings.Contains(c.Request.Host, "localhost") ||
+		strings.Contains(c.Request.Host, "127.0.0.1")
 
+	// Set Cookie with dynamic security settings
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "session_id",
+		Value:    sessionID,
+		Path:     "/",
+		MaxAge:   86400,
+		HttpOnly: true,
+		Secure:   !isLocalhost, // ✅ false สำหรับ localhost, true สำหรับ production
+		SameSite: http.SameSiteNoneMode,
+	})
+
+	// ส่ง session_id กลับไปใน response body ด้วย (สำหรับ Token-based)
 	c.JSON(status, utils.SuccessResponse{
 		Message: resp.Message,
-		Data: response.LoginUserResponse{
-			Message: "Cookie has been set (in-memory session)",
+		Data: map[string]interface{}{
+			"session_id": sessionID, // ✅ เพิ่มบรรทัดนี้!
+			"message":    "Cookie has been set (in-memory session)",
+			"user":       dataMap["user"], // ส่งข้อมูล user กลับไปด้วย (ถ้ามี)
 		},
 	})
 }
@@ -135,16 +151,17 @@ func (h *userHandlerImpl) LogoutUser(c *gin.Context) {
 		return
 	}
 
-	// ลบ cookie
-	c.SetCookie(
-		"session_id",
-		"",
-		-1,
-		"/",
-		"",
-		false,
-		true,
-	)
+	isLocalhost := strings.Contains(c.Request.Host, "localhost") ||
+		strings.Contains(c.Request.Host, "127.0.0.1")
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "session_id",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   !isLocalhost,
+		SameSite: http.SameSiteNoneMode,
+	})
 
 	c.JSON(status, utils.SuccessResponse{
 		Message: "User logged out successfully",
