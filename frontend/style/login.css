@@ -1,0 +1,117 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
+
+:root{
+  --red:#d00027;
+  --dark-red:#7a000f;
+  --white:#fff;
+  --gray:#ccc;
+}
+
+*{box-sizing:border-box;}
+html,body{height:100%; margin:0; padding:0;}
+
+body{
+  font-family:'Kanit', sans-serif;
+  color:var(--white);
+  background:url(../pages/user/liver.jpg) no-repeat center center fixed;
+  background-size:cover;
+
+  /* จัดทุกอย่างให้อยู่กลางหน้าจอ */
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+.container{
+  max-width:880px;
+  padding:20px;
+  text-align:center;
+  backdrop-filter:blur(4px);
+}
+
+.card{
+  max-width:420px;
+  margin:40px auto;
+  background:rgba(255,255,255,0.1);
+  border-radius:16px;
+  padding:24px;
+  border:1px solid rgba(255,255,255,0.3);
+  box-shadow:0 10px 30px rgba(0,0,0,0.4);
+}
+
+h1{ 
+  font-size:60px; 
+  margin:0 0 10px; 
+  color:#ffffff; 
+  text-shadow:0 0 6px rgba(0,0,0,0.6);
+}
+h2{
+  font-size:22px; 
+  margin-bottom:12px;
+  color:#ffffff;
+}
+p{
+  color:#eee;
+}
+
+.btn{
+  display:inline-block;
+  padding:10px 16px;
+  background:var(--red);
+  color:#fff;
+  border:none;
+  border-radius:8px;
+  text-decoration:none;
+  cursor:pointer;
+  transition:0.2s;
+}
+.btn:hover{
+  background:#ff2b41;
+}
+.btn.outline{
+  background:transparent;
+  border:2px solid var(--red);
+  color:var(--red);
+}
+.btn-group{
+  display:flex; 
+  gap:12px; 
+  justify-content:center; 
+  margin-top:16px; 
+  flex-wrap:wrap;
+}
+
+label{
+  display:block; 
+  margin-bottom:14px; 
+  font-size:14px; 
+  text-align:left; 
+  color:#fff;
+}
+input{
+  width:100%; 
+  padding:10px; 
+  border-radius:6px; 
+  border:1px solid var(--gray);
+  margin-top:6px; 
+  font-size:14px; 
+  background:rgba(255,255,255,0.8); 
+  color:#000;
+}
+input:focus{
+  outline:none; 
+  border-color:var(--red);
+}
+
+.muted{
+  color:#ddd; 
+  font-size:13px;
+}
+a{
+  color:#ffd700; 
+  text-decoration:none;
+}
+a:hover{
+  text-decoration:underline;
+}
