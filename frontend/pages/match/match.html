@@ -21,7 +21,11 @@
     <section class="teams-section">
       <h2 class="section-title" id="section-title">Select Team</h2>
       <div class="search-box">
-        <input type="text" id="team-search" placeholder="Search teams..." aria-label="Search teams">
+        <input type="text" 
+              id="team-search" 
+              pattern="^[A-Za-z]"
+              placeholder="Search teams..." 
+              aria-label="Search teams">
       </div>
       <div id="teams-container" class="teams-grid" data-loaded="false">
         <div class="loading-spinner">Loading teams...</div>
