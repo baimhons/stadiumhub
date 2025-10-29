@@ -1,182 +1,402 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Booking History</title>
-  <style>
-    :root{
-      --bg:#0b0f15;--card:#121826;--muted:#9aa4b2;--text:#e5e7eb;--accent:#4f46e5;--ok:#10b981;--warn:#f59e0b;--err:#ef4444;--chip:#1f2937;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;background:linear-gradient(180deg,#0b0f15,#0e121a 40%,#0b0f15);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
-    .container{max-width:1100px;margin-inline:auto;padding:28px}
-    header{display:flex;align-items:center;gap:14px;margin-bottom:18px}
-    h1{font-size:1.6rem;margin:0}
-    .controls{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 24px}
-    input,button{border:1px solid #1f2a3a;background:#0e1420;color:var(--text);padding:10px 12px;border-radius:12px}
-    input{min-width:260px}
-    button{cursor:pointer}
-    button.primary{background:var(--accent);border-color:transparent}
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../../style/get_all_booking _history.css" />
 
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-    .card{background:var(--card);border:1px solid #1c2433;border-radius:18px;padding:16px;box-shadow:0 8px 28px rgba(0,0,0,.35)}
-    .card h3{margin:0 0 6px;font-size:1.1rem}
-    .muted{color:var(--muted)}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .status{padding:6px 10px;border-radius:999px;font-size:.8rem;font-weight:600;background:var(--chip);border:1px solid #2b364a}
-    .status.PAID{background:rgba(16,185,129,.12);color:#8cf0c4;border-color:rgba(16,185,129,.35)}
-    .status.PENDING{background:rgba(245,158,11,.12);color:#f7ce8f;border-color:rgba(245,158,11,.35)}
-    .status.CANCELED{background:rgba(239,68,68,.12);color:#f7a3a3;border-color:rgba(239,68,68,.35)}
-    .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-    .chip{font-size:.78rem;padding:6px 8px;border:1px solid #2b364a;border-radius:999px;color:#cbd5e1;background:#121827}
-    .total{margin-left:auto;font-weight:700}
-    .card footer{display:flex;align-items:center;gap:10px;margin-top:12px}
-    .pill{padding:6px 10px;border-radius:10px;background:#0e1420;border:1px solid #1e2a3d;color:#cbd5e1}
-    .error,.empty,.loading{border:1px dashed #2a364a;border-radius:16px;padding:14px;text-align:center;color:var(--muted)}
-    .loading{animation:pulse 1.5s ease-in-out infinite}
-    @keyframes pulse{0%{opacity:.5}50%{opacity:1}100%{opacity:.5}}
-    .small{font-size:.85rem}
-    .ghost{opacity:.7}
-    .id{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.75rem;color:#9fb0c7}
-  </style>
 </head>
+
 <body>
   <div class="container">
     <header>
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M4 7a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7Z" stroke="#9aa4b2" stroke-width="1.2"/><path d="M7 9h10M7 13h10M7 17h6" stroke="#9aa4b2" stroke-width="1.2" stroke-linecap="round"/></svg>
-      <h1>ประวัติการจอง (History Booking)</h1>
+      <div class="title">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 7a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7Z" stroke="#9aa4b2" stroke-width="1.2"/>
+          <path d="M7 9h10M7 13h10M7 17h6" stroke="#9aa4b2" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+        <h1>Booking History</h1>
+      </div>
+      <button class="back-btn" onclick="history.back()">Back</button>
     </header>
-
-    <div class="controls">
-      <input id="userIdInput" placeholder="ใส่ User ID (เช่น 6645dcd7-...)"/>
-      <button id="loadBtn" class="primary">โหลดประวัติ</button>
-      <button id="demoBtn">ใช้ข้อมูลตัวอย่าง</button>
-    </div>
 
     <div id="state"></div>
     <section id="list" class="grid" aria-live="polite"></section>
+    <div class="pagination" id="pagination"></div>
+  </div>
+
+  <!-- ===== Modal ===== -->
+  <div id="detailModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="detailTitle" aria-hidden="true">
+    <div class="sheet">
+      <header>
+        <h2 id="detailTitle">Order details</h2>
+        <button class="close-x" aria-label="Close dialog" id="closeModalBtn">×</button>
+      </header>
+      <div class="content" id="detailContent">
+        <!-- เติมด้วย JS -->
+      </div>
+    </div>
   </div>
 
   <script>
-    // 👉 ตั้งค่า API ของคุณที่นี่
-    // ตัวอย่าง endpoint แนะนำ: GET /booking/history/:user_id
-    const API_BASE = "https://stadiumhub.onrender.com/api/v1"; // เช่น "https://api.example.com" (แก้ให้ตรงระบบคุณ)
+    const API_BASE = "https://stadiumhub.onrender.com/api/v1";
+    const PAGE_SIZE = 10;
+    let currentPage = 1;
+    let isLoading = false;
 
     const el = {
-      userId: document.getElementById('userIdInput'),
-      load: document.getElementById('loadBtn'),
-      demo: document.getElementById('demoBtn'),
       list: document.getElementById('list'),
       state: document.getElementById('state'),
+      pagination: document.getElementById('pagination'),
+      modal: document.getElementById('detailModal'),
+      detail: document.getElementById('detailContent'),
+      closeBtn: document.getElementById('closeModalBtn')
     };
 
     function formatTHB(n){
-      if(n==null) return "-";
-      return new Intl.NumberFormat('th-TH',{style:'currency',currency:'THB',maximumFractionDigits:0}).format(n);
+      return n==null ? "-" : new Intl.NumberFormat('en-TH',{
+        style:'currency',currency:'THB',maximumFractionDigits:0
+      }).format(n);
     }
-
-    function toThaiDate(iso){
+    function toLocalDate(iso){
       try{
-        const d = new Date(iso);
-        return d.toLocaleString('th-TH',{ timeZone:'Asia/Bangkok', year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+        return new Date(iso).toLocaleString('en-GB',{
+          timeZone:'Asia/Bangkok', year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'
+        });
       }catch(e){ return iso; }
     }
 
-    function trimSeat(s){ return (s||'').trim(); }
-
-    function normalizeBookings(payload){
-      // รองรับทั้งรูปแบบ {data: {...}} (1 รายการ) และ {data: [...]} (หลายรายการ)
-      if(!payload) return [];
-      const d = payload.data;
-      if(Array.isArray(d)) return d;
-      if(d && typeof d === 'object') return [d];
+    // --- helpers ใหม่: รองรับ payload หลายรูปแบบ ---
+    function normalizeBookings(p){
+      const root = p?.data ?? p;
+      if (Array.isArray(root)) return root;
+      if (Array.isArray(root?.data)) return root.data;
+      if (Array.isArray(root?.items)) return root.items;
+      if (Array.isArray(root?.results)) return root.results;
       return [];
     }
 
-    function renderState(kind, msg){
-      el.state.innerHTML = `<div class="${kind}">${msg}</div>`;
+    function extractPaginationMeta(p, page, pageSize, gotCount){
+      const m = p?.meta || p?.pagination || p?.data?.meta || p?.data?.pagination || {};
+      const next = (m.next ?? m.hasNext ?? m.has_next);
+
+      const curPage = Number(m.page ?? m.current_page ?? m.page_index ?? page) || page;
+      const size = Number(m.page_size ?? m.per_page ?? m.limit ?? pageSize) || pageSize;
+
+      let hasNext = false;
+      if (typeof next === 'boolean') hasNext = next;
+      else if (typeof next === 'number') hasNext = next > curPage;
+      else if (m.total_pages != null) hasNext = curPage < Number(m.total_pages);
+      else if (m.total != null) hasNext = curPage * size < Number(m.total);
+      else hasNext = gotCount === size;
+
+      return { hasNext, curPage, size };
     }
 
-    function clearState(){ el.state.innerHTML = ''; }
+    function renderState(k,m){ el.state.innerHTML=`<div class="${k}">${m}</div>`; }
+    function clearState(){ el.state.innerHTML=''; }
+
+    function renderPagination(page, hasNext) {
+      el.pagination.innerHTML = '';
+
+      const prevBtn = document.createElement('button');
+      prevBtn.textContent = 'Previous';
+      prevBtn.className = 'btn';
+      prevBtn.disabled = page === 1 || isLoading;
+      prevBtn.onclick = () => { if (!isLoading && page > 1) loadPage(page - 1); };
+
+      const nextBtn = document.createElement('button');
+      nextBtn.textContent = 'Next';
+      nextBtn.className = 'btn';
+      nextBtn.disabled = !hasNext || isLoading;
+      nextBtn.onclick = () => { if (!isLoading && hasNext) loadPage(page + 1); };
+
+      const pageLabel = document.createElement('span');
+      pageLabel.textContent = `Page ${page}`;
+      pageLabel.style.padding = '8px 12px';
+
+      el.pagination.append(prevBtn, pageLabel, nextBtn);
+    }
+
+    // --- seat helpers: รองรับหลายคีย์ที่พบบ่อย ---
+    function getSeatParts(obj = {}) {
+      const o = obj.Seat || obj.seat || obj; // บางระบบซ้อนใน seat/Seat
+
+      // zone/block/section
+      const zone =
+        o?.block ?? o?.Block ?? o?.zone ?? o?.Zone ?? o?.section ?? o?.section_name ??
+        o?.sectionName ?? o?.area ?? o?.stand ?? o?.zone_name ?? o?.ZoneName ?? null;
+
+      // row/line
+      const row =
+        o?.row ?? o?.Row ?? o?.line ?? o?.Line ?? o?.row_number ?? o?.rowNumber ??
+        o?.RowNumber ?? o?.tier ?? null;
+
+      // seat/number/label
+      const seat =
+        o?.seat ?? o?.Seat ?? o?.number ?? o?.No ?? o?.no ?? o?.seat_no ?? o?.seatNo ??
+        o?.SeatNumber ?? o?.seat_number ?? o?.label ?? o?.seat_label ?? null;
+
+      return { zone, row, seat };
+    }
+
+    function seatSummaryFromAny(item) {
+      const { zone, row, seat } = getSeatParts(item || {});
+      const parts = [];
+      if (seat) parts.push(`Seat ${seat}`);
+      if (row) parts.push(`Row ${row}`);
+      if (zone) parts.push(`Zone ${zone}`);
+      return parts.join(" · ");
+    }
+
+    async function loadPage(page){
+      if (isLoading) return;
+      isLoading = true;
+
+      renderState('loading','Loading booking history...');
+      el.list.innerHTML='';
+
+      try{
+        const res = await fetch(`${API_BASE}/booking/history?page=${page-1}&page_size=${PAGE_SIZE}&sort=created_at&order=desc`, {
+          method:'GET', credentials:'include', headers:{'Accept':'application/json'}
+        });
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const payload = await res.json();
+        const bookings = normalizeBookings(payload);
+        window._lastBookings = bookings; // เก็บไว้เป็น fallback
+
+        clearState();
+        renderList(bookings);
+
+        const { hasNext, curPage } = extractPaginationMeta(payload, page, PAGE_SIZE, bookings.length);
+        currentPage = curPage || page;
+        renderPagination(currentPage, !!hasNext);
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch(err) {
+        console.error(err);
+        renderState('error', `Failed to load: ${err.message}`);
+        renderPagination(currentPage, true);
+      } finally {
+        isLoading = false;
+      }
+    }
+
+    function getBookingId(b){
+      return b?.id ?? b?.booking_id ?? b?.order_id ?? b?.uuid ?? b?.reference_id ?? null;
+    }
 
     function renderList(bookings){
       if(!bookings.length){
-        el.list.innerHTML = '';
-        renderState('empty','ยังไม่มีประวัติการจอง');
+        el.list.innerHTML='';
+        renderState('empty','No booking history yet');
         return;
       }
       clearState();
-      const html = bookings.map(b=>{
-        const match = b.Match || {}; 
-        const home = match.HomeTeam?.Name || '-';
-        const away = match.AwayTeam?.Name || '-';
-        const when = match.UTCDate ? toThaiDate(match.UTCDate) : '-';
-        const venue = match.Venue || match.HomeTeam?.Venue || '-';
-        const seats = (b.seats||[]).map(s=>trimSeat(s.seat_no)).filter(Boolean);
-        const seatChips = seats.slice(0,6).map(s=>`<span class="chip" title="${s}">${s}</span>`).join('');
-        const extra = seats.length>6 ? `<span class="chip ghost">+${seats.length-6}</span>`:'';
-        const status = b.status || 'UNKNOWN';
-        const total = b.total_price;
-        const kickOff = match.UTCDate || '';
-        const id = b.id || b.ID || '';
 
+      const html = bookings.map(b=>{
+        const m=b.Match||{};
+        const home=m.HomeTeam?.ShortName||'-', away=m.AwayTeam?.ShortName||'-';
+        const venue=m.Venue||m.HomeTeam?.Venue||'-';
+        const status=b.status||'UNKNOWN', total=b.total_price;
+        const kickOff = m.UTCDate || ''; /* removed from UI */
+
+        // ดึงSeatแรกมาโชว์สรุป
+        const tickets = b?.tickets ?? b?.Seats ?? b?.seats ?? b?.items ?? [];
+        const firstSeat = Array.isArray(tickets) ? tickets[0] : null;
+        const seatChip = firstSeat ? seatSummaryFromAny(firstSeat) : '';
+
+        const id=getBookingId(b);
         return `
-          <article class="card" aria-label="booking card">
+          <article class="card" data-id="${id ?? ''}" tabindex="0" role="button" aria-label="Open order details">
             <div class="row">
               <h3>${home} <span class="muted">vs</span> ${away}</h3>
               <span class="status ${status}">${status}</span>
             </div>
-            <div class="small muted">${venue}</div>
-            <div class="small">${when}</div>
-
-            <div class="chips">${seatChips}${extra}</div>
-
+            <div class="muted small">${venue}</div>
             <footer>
-              <span class="pill">ตั๋ว: ${(b.seats||[]).length} ใบ</span>
-              <span class="pill">คิกออฟ (UTC): ${kickOff ? new Date(kickOff).toUTCString().slice(5,22) : '-'}</span>
+              ${seatChip ? `<span class="pill">${seatChip}</span>` : ''}
               <span class="total">${formatTHB(total)}</span>
             </footer>
-            <div class="id" title="Booking ID">${id}</div>
           </article>`;
       }).join('');
+
       el.list.innerHTML = html;
+
+      // bind events
+      el.list.querySelectorAll('.card').forEach(card=>{
+        card.addEventListener('click', onCardActivate);
+        card.addEventListener('keydown', e=>{
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onCardActivate.call(card, e); }
+        });
+      });
     }
 
-    async function loadHistory(userId){
-      if(!userId){
-        renderState('error','กรุณาใส่ User ID');
-        return;
+    async function onCardActivate(e){
+      const id = this.getAttribute('data-id');
+      const idx = Array.from(el.list.children).indexOf(this);
+      const fallbackBooking = window._lastBookings?.[idx] ?? null;
+
+      openModal(loadingDetailSkeleton());
+
+      // 1) ใช้ API ถ้ามี id
+      if (id) {
+        try {
+          const res = await fetch(`${API_BASE}/booking/${encodeURIComponent(id)}`, {
+            method:'GET', credentials:'include', headers:{'Accept':'application/json'}
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const payload = await res.json();
+          const detail = payload?.data ?? payload;
+          el.detail.innerHTML = renderDetailContent(detail);
+          return;
+        } catch(err) {
+          console.warn('detail api failed, fallback to list item', err);
+        }
       }
-      renderState('loading','กำลังโหลด...');
-      el.list.innerHTML = '';
-      try{
-        const url = `${API_BASE}/booking/history/${encodeURIComponent(userId)}`;
-        const res = await fetch(url,{headers:{'Accept':'application/json'}});
-        if(!res.ok) throw new Error(`HTTP ${res.status}`);
-        const payload = await res.json();
-        const bookings = normalizeBookings(payload);
-        renderList(bookings);
-      }catch(err){
-        console.error(err);
-        renderState('error',`โหลดไม่สำเร็จ: ${err.message}`);
+
+      // 2) fallback แสดงจากรายการที่คลิก
+      if (fallbackBooking) {
+        el.detail.innerHTML = renderDetailContent(fallbackBooking, /*isFallback*/true);
+      } else {
+        el.detail.innerHTML = `<div class="error">Unable to load details</div>`;
       }
     }
 
-    // ปุ่มโหลด
-    el.load.addEventListener('click',()=>{
-      loadHistory(el.userId.value.trim());
-    });
+    function loadingDetailSkeleton(){
+      return `
+        <div class="kv">
+          <div class="k">Status</div><div>Loading...</div>
+          <div class="k">Order ID</div><div>Loading...</div>
+          <div class="k">Total</div><div>Loading...</div>
+        </div>
+        <div class="divider"></div>
+        <div class="muted small">Fetching seat/ticket details...</div>
+      `;
+    }
 
-    // เดโม่ด้วยข้อมูลที่คุณให้มา (single booking) เพื่อให้เห็นผลทันที
-    el.demo.addEventListener('click',()=>{
-      const demo = {"message":"get booking success","data":{"id":"edfb1476-94ef-4481-9891-0e5bd98464f0","user_id":"6645dcd7-a693-4723-ae12-76a09e135c90","User":{"ID":"6645dcd7-a693-4723-ae12-76a09e135c90","CreatedAt":"2025-10-28T17:52:19.843599Z","UpdatedAt":"2025-10-28T18:33:38.419779Z","DeletedAt":null,"Username":"beam1784","FirstName":"Arnuphap","LastName":"Uthaiwong","Email":"arnuphapbeamgenshin02@gmail.com","Password":"","PhoneNumber":"0123456789","Role":"user"},"match_id":537881,"Match":{"ID":537881,"HomeTeamID":65,"HomeTeam":{"ID":65,"Name":"Manchester City FC","ShortName":"Man City","TLA":"MCI","Address":"SportCity Manchester M11 3FF","Venue":"Etihad Stadium","ViewerCapacity":55097,"Price":3800,"CreatedAt":"2025-10-25T17:50:04.731356Z","UpdatedAt":"2025-10-25T17:51:52.283446Z"},"AwayTeamID":1044,"AwayTeam":{"ID":1044,"Name":"AFC Bournemouth","ShortName":"Bournemouth","TLA":"BOU","Address":"Dean Court, Kings Park Bournemouth BH7 7AF","Venue":"Vitality Stadium","ViewerCapacity":11464,"Price":2500,"CreatedAt":"2025-10-25T17:50:06.010265Z","UpdatedAt":"2025-10-25T17:51:51.256576Z"},"UTCDate":"2025-11-02T16:30:00Z","Status":"TIMED","Venue":"Etihad Stadium","CreatedAt":"2025-10-28T21:31:52.746365Z","UpdatedAt":"2025-10-28T21:31:52.773153Z"},"total_price":22800,"status":"PAID","seats":[{"seat_id":"15693864-ab29-447b-a8a1-f4799494476f","seat_no":"n-121       ","price":3800},{"seat_id":"16948340-256f-4a92-91bc-a5938772e2d8","seat_no":"n-120       ","price":3800},{"seat_id":"2657c8ba-566f-4928-b3f5-00a57ab7a167","seat_no":"n-122       ","price":3800},{"seat_id":"5f6b3203-fe52-46a9-a85c-2f98b4e1d843","seat_no":"n-124       ","price":3800},{"seat_id":"a96d0296-38cb-458d-a949-96dda54b0d6d","seat_no":"n-12        ","price":3800},{"seat_id":"cbe17685-3ecc-4138-9477-19f820af7d5f","seat_no":"n-123       ","price":3800}],"created_at":"2025-10-28T17:56:10.083906Z","updated_at":"2025-10-28T17:57:32.674882Z"}};
-      clearState();
-      renderList(normalizeBookings(demo));
-    });
+    function renderDetailContent(b, isFallback=false){
+      // เดาทุกรูปร่างข้อมูลที่พบบ่อย
+      const id = getBookingId(b) || '—';
+      const status = b?.status ?? 'UNKNOWN';
+      const created = b?.created_at || b?.createdAt || b?.created || b?.ordered_at || null;
+      const total = b?.total_price ?? b?.amount ?? b?.total ?? null;
 
-    // UX: Enter เพื่อโหลด
-    el.userId.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ el.load.click(); }});
+      // Seat / ตั๋ว
+      const tickets = b?.tickets ?? b?.Seats ?? b?.seats ?? b?.items ?? [];
+      const match = b?.Match ?? b?.match ?? {};
+      const home = match?.HomeTeam?.ShortName ?? match?.home ?? '-';
+      const away = match?.AwayTeam?.ShortName ?? match?.away ?? '-';
+      const venue = match?.Venue ?? match?.HomeTeam?.Venue ?? b?.venue ?? '-';
+      const ko = match?.UTCDate ?? b?.kickoff ?? null; /* removed from UI */
+
+      const customer = b?.customer ?? b?.User ?? b?.user ?? {};
+      const name = customer?.name ?? customer?.full_name ?? customer?.FullName ?? '';
+      const email = customer?.email ?? '';
+
+      const metaBlock = `
+        <div class="kv" style="margin-bottom:8px">
+          <div class="k">Order ID</div><div><span class="tag">${id}</span></div>
+          <div class="k">Status</div><div><span class="status ${status}">${status}</span></div>
+          <div class="k">Total</div><div class="total">${formatTHB(total)}</div>
+          <div class="k">Created</div><div>${created ? toLocalDate(created) : '-'}</div>
+        </div>
+      `;
+
+      const matchBlock = `
+        <div class="kv" style="margin:10px 0 8px">
+          <div class="k">การแข่งขัน</div><div>${home} <span class="muted">vs</span> ${away}</div>
+          <div class="k">สนาม</div><div>${venue}</div>
+        </div>
+      `;
+
+      const customerBlock = (name || email) ? `
+        <div class="kv" style="margin:10px 0 8px">
+          <div class="k">Customer</div><div>${name || '-'}</div>
+          <div class="k">Email</div><div>${email || '-'}</div>
+        </div>
+      ` : '';
+
+      const ticketList = Array.isArray(tickets) && tickets.length
+        ? `
+          <div class="divider"></div>
+          <div style="margin-bottom:6px; font-weight:600">Tickets / Seats</div>
+          <div class="grid" style="gap:8px">
+            ${tickets.map((t)=>{
+              const { zone, row, seat } = getSeatParts(t);
+              const price = t?.price ?? t?.amount ?? t?.Price ?? null;
+              const ref = t?.ticket_id ?? t?.id ?? t?.uuid ?? t?.reference ?? '';
+              const line = [
+                seat ? `Seat ${seat}` : null,
+                row ? `<span class=\"muted\">Row<\/span> ${row}` : null,
+                zone ? `<span class=\"muted\">Zone<\/span> ${zone}` : null
+              ].filter(Boolean).join(' ');
+
+              return `
+                <div style="border:1px solid var(--border); border-radius:12px; padding:10px 12px">
+                  <div style="display:flex; justify-content:space-between; align-items:center">
+                    <div>${line || '-'}</div>
+                    <div>${formatTHB(price)}</div>
+                  </div>
+                  ${ref ? `<div class="muted small" style="margin-top:4px">Ticket ID: ${ref}</div>` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        ` : '';
+
+      const fallbackNote = isFallback
+        ? `<div class="muted small" style="margin-top:10px">แสดงจากข้อมูลรายการเบื้องต้น (ไม่สามารถเรียกรายละเอียดจาก API ได้)</div>`
+        : '';
+
+      return metaBlock + matchBlock + customerBlock + ticketList + fallbackNote ;
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#039;");
+    }
+
+    // ===== Modal helpers =====
+    function openModal(innerHtml){
+      el.detail.innerHTML = innerHtml || '';
+      el.modal.classList.add('open');
+      el.modal.removeAttribute('aria-hidden');
+      // โฟกัสปุ่มปิดเพื่อการเข้าถึง
+      setTimeout(()=> el.closeBtn.focus(), 0);
+      // ปิดเมื่อกดพื้นหลัง
+      el.modal.addEventListener('click', onBackdropClick);
+      // ปิดด้วยคีย์ Esc
+      window.addEventListener('keydown', onEsc);
+    }
+
+    function closeModal(){
+      el.modal.classList.remove('open');
+      el.modal.setAttribute('aria-hidden','true');
+      el.detail.innerHTML = '';
+      el.modal.removeEventListener('click', onBackdropClick);
+      window.removeEventListener('keydown', onEsc);
+    }
+
+    function onBackdropClick(e){
+      if (e.target === el.modal) closeModal();
+    }
+    function onEsc(e){
+      if (e.key === 'Escape') closeModal();
+    }
+
+    el.closeBtn.addEventListener('click', closeModal);
+
+    window.addEventListener('DOMContentLoaded', () => loadPage(1));
   </script>
 </body>
 </html>
