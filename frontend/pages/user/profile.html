@@ -33,7 +33,7 @@
     function renderError(msg, extra) {
       const detail = extra ? `\n\nDetails:\n${extra}` : '';
       contentEl.classList.remove('muted');
-      contentEl.innerHTML = `<div class="error">❌ Failed to load: ${msg}${detail}</div>`;
+      contentEl.innerHTML = `<div class="error"> Failed to load: ${msg}${detail}</div>`;
     }
 
     function pickFields(raw) {
@@ -98,7 +98,7 @@
         });
 
         if (res.ok) {
-          location.href = 'login.html'; // Redirect to login after logout
+          location.href = 'login.html'; 
         } else {
           const text = await res.text();
           alert(`Logout failed: HTTP ${res.status} - ${text}`);
@@ -113,12 +113,10 @@
       location.href = `update_profile.html?return=${returnUrl}`;
     }
 
-    // Go to booking history page
     function goToBookingHistory() {
       location.href = '../user/get_all_booking%20_history.html';
     }
 
-    // Go back to match page
     function goBack() {
       location.href = '../match/match.html';
     }

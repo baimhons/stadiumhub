@@ -4,9 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sign up - Football Field Booking</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../style/register.css">
 </head>
 <body>
@@ -18,7 +15,9 @@
         <label for="regUsername">Username
           <div class="fld">
             <input type="text" id="regUsername" name="username" minlength="3" required
-                   autocomplete="username" placeholder="Jamelnwza007" />
+                   autocomplete="username" placeholder="Jamelnwza007"
+                   pattern="[A-Za-z0-9]{3,20}"
+                   title="Letters and numbers only (3-20 characters)" />
           </div>
         </label>
 
@@ -26,14 +25,18 @@
           <label for="regFirstName">First name
             <div class="fld">
               <input type="text" id="regFirstName" name="first_name" required
-                     autocomplete="given-name" placeholder="name" />
+                     autocomplete="given-name" placeholder="John"
+                     pattern="[A-Za-z]{2,50}"
+                     title="Letters only (2–50 characters)" />
             </div>
           </label>
 
           <label for="regLastName">Last name
             <div class="fld">
               <input type="text" id="regLastName" name="last_name" required
-                     autocomplete="family-name" placeholder="lastname" />
+                     autocomplete="family-name" placeholder="Doe"
+                     pattern="[A-Za-z]{2,50}"
+                     title="Letters only (2–50 characters)" />
             </div>
           </label>
         </div>
@@ -41,7 +44,8 @@
         <label for="regEmail">Email
           <div class="fld">
             <input type="email" id="regEmail" name="email" required
-                   autocomplete="email" placeholder="you1234@example.com" />
+                   autocomplete="email" placeholder="you1234@example.com"
+                   title="Enter a valid email address" />
           </div>
         </label>
 
@@ -49,8 +53,9 @@
           <div class="fld">
             <input type="tel" id="regPhone" name="phone_number" required
                    pattern="[0-9]{9,15}" inputmode="numeric" autocomplete="tel"
-                   placeholder="0123456789" />
-            <small class="muted">Numbers only, 9–15 digits</small>
+                   placeholder="0123456789"
+                   title="Digits only (9-15 numbers)" />
+            <small class="muted">Numbers only, 9-15 digits</small>
           </div>
         </label>
 
@@ -58,7 +63,9 @@
           <label for="regPassword">Password
             <div class="fld dual">
               <input type="password" id="regPassword" name="password" minlength="6" required
-                     autocomplete="new-password" placeholder="at least 6 characters" />
+                     autocomplete="new-password" placeholder="at least 6 characters"
+                     pattern=".{6,}"
+                     title="At least 6 characters" />
               <button class="toggle" type="button" data-toggle="regPassword" aria-controls="regPassword" aria-pressed="false" title="Show/Hide password">Show</button>
             </div>
           </label>
@@ -66,7 +73,9 @@
           <label for="regConfirm">Confirm password
             <div class="fld dual">
               <input type="password" id="regConfirm" name="confirm_password" minlength="6" required
-                     autocomplete="new-password" placeholder="type it again" />
+                     autocomplete="new-password" placeholder="type it again"
+                     pattern=".{6,}"
+                     title="At least 6 characters" />
               <button class="toggle" type="button" data-toggle="regConfirm" aria-controls="regConfirm" aria-pressed="false" title="Show/Hide password">Show</button>
             </div>
           </label>
@@ -74,7 +83,6 @@
 
         <div class="toolbar">
           <button class="btn" id="registerBtn" type="submit">Sign up</button>
-        
         </div>
       </form>
 
@@ -124,6 +132,7 @@
       return String(s).replace(/[&<>"']/g, m =>
         ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]));
     }
+
     document.querySelectorAll('.toggle').forEach(tg=>{
       tg.addEventListener('click', ()=>{
         const id = tg.dataset.toggle;

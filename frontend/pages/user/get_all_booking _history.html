@@ -7,8 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="../../style/get_all_booking _history.css" />
-
+  <link rel="stylesheet" href="../../style/get_all_booking _history.css" />
 </head>
 
 <body>
@@ -36,9 +35,7 @@
         <h2 id="detailTitle">Order details</h2>
         <button class="close-x" aria-label="Close dialog" id="closeModalBtn">×</button>
       </header>
-      <div class="content" id="detailContent">
-        <!-- เติมด้วย JS -->
-      </div>
+      <div class="content" id="detailContent"></div>
     </div>
   </div>
 
@@ -70,7 +67,7 @@
       }catch(e){ return iso; }
     }
 
-    // --- helpers ใหม่: รองรับ payload หลายรูปแบบ ---
+    // --- normalize list payload ---
     function normalizeBookings(p){
       const root = p?.data ?? p;
       if (Array.isArray(root)) return root;
@@ -80,21 +77,46 @@
       return [];
     }
 
+    // --- robust pagination meta (handles both 0/1-based and missing meta) ---
     function extractPaginationMeta(p, page, pageSize, gotCount){
       const m = p?.meta || p?.pagination || p?.data?.meta || p?.data?.pagination || {};
-      const next = (m.next ?? m.hasNext ?? m.has_next);
+      const nextToken = (m.next ?? m.hasNext ?? m.has_next ?? m.next_page ?? m.nextPage);
 
-      const curPage = Number(m.page ?? m.current_page ?? m.page_index ?? page) || page;
+      const curPageRaw = Number(m.page ?? m.current_page ?? m.page_index);
       const size = Number(m.page_size ?? m.per_page ?? m.limit ?? pageSize) || pageSize;
+      const totalPages = Number(m.total_pages ?? m.totalPages);
+      const total = Number(m.total ?? m.count);
 
-      let hasNext = false;
-      if (typeof next === 'boolean') hasNext = next;
-      else if (typeof next === 'number') hasNext = next > curPage;
-      else if (m.total_pages != null) hasNext = curPage < Number(m.total_pages);
-      else if (m.total != null) hasNext = curPage * size < Number(m.total);
-      else hasNext = gotCount === size;
+      let hasNext;
 
-      return { hasNext, curPage, size };
+      if (typeof nextToken === 'boolean') {
+        hasNext = nextToken;
+      } else if (typeof nextToken === 'number') {
+        hasNext = !Number.isNaN(nextToken);
+      }
+
+      if (hasNext === undefined && !Number.isNaN(totalPages)) {
+        if (!Number.isNaN(curPageRaw)) {
+          // covers both 0-based and 1-based cases
+          hasNext = (curPageRaw + 1 < totalPages) || (curPageRaw < totalPages);
+        } else {
+          hasNext = page < totalPages; // UI uses 1-based
+        }
+      }
+
+      if (hasNext === undefined && !Number.isNaN(total)) {
+        if (!Number.isNaN(curPageRaw)) {
+          hasNext = (curPageRaw * size < total) || ((curPageRaw - 1) * size < total);
+        } else {
+          hasNext = (page * size < total);
+        }
+      }
+
+      if (hasNext === undefined) {
+        hasNext = gotCount >= size; // fallback: if full page, assume next exists
+      }
+
+      return { hasNext: !!hasNext, size };
     }
 
     function renderState(k,m){ el.state.innerHTML=`<div class="${k}">${m}</div>`; }
@@ -107,13 +129,17 @@
       prevBtn.textContent = 'Previous';
       prevBtn.className = 'btn';
       prevBtn.disabled = page === 1 || isLoading;
-      prevBtn.onclick = () => { if (!isLoading && page > 1) loadPage(page - 1); };
+      prevBtn.onclick = async () => {
+        if (!isLoading && page > 1) await loadPage(page - 1);
+      };
 
       const nextBtn = document.createElement('button');
       nextBtn.textContent = 'Next';
       nextBtn.className = 'btn';
       nextBtn.disabled = !hasNext || isLoading;
-      nextBtn.onclick = () => { if (!isLoading && hasNext) loadPage(page + 1); };
+      nextBtn.onclick = async () => {
+        if (!isLoading && hasNext) await loadPage(page + 1); 
+      };
 
       const pageLabel = document.createElement('span');
       pageLabel.textContent = `Page ${page}`;
@@ -122,62 +148,31 @@
       el.pagination.append(prevBtn, pageLabel, nextBtn);
     }
 
-    // --- seat helpers: รองรับหลายคีย์ที่พบบ่อย ---
-    function getSeatParts(obj = {}) {
-      const o = obj.Seat || obj.seat || obj; // บางระบบซ้อนใน seat/Seat
-
-      // zone/block/section
-      const zone =
-        o?.block ?? o?.Block ?? o?.zone ?? o?.Zone ?? o?.section ?? o?.section_name ??
-        o?.sectionName ?? o?.area ?? o?.stand ?? o?.zone_name ?? o?.ZoneName ?? null;
-
-      // row/line
-      const row =
-        o?.row ?? o?.Row ?? o?.line ?? o?.Line ?? o?.row_number ?? o?.rowNumber ??
-        o?.RowNumber ?? o?.tier ?? null;
-
-      // seat/number/label
-      const seat =
-        o?.seat ?? o?.Seat ?? o?.number ?? o?.No ?? o?.no ?? o?.seat_no ?? o?.seatNo ??
-        o?.SeatNumber ?? o?.seat_number ?? o?.label ?? o?.seat_label ?? null;
-
-      return { zone, row, seat };
-    }
-
-    function seatSummaryFromAny(item) {
-      const { zone, row, seat } = getSeatParts(item || {});
-      const parts = [];
-      if (seat) parts.push(`Seat ${seat}`);
-      if (row) parts.push(`Row ${row}`);
-      if (zone) parts.push(`Zone ${zone}`);
-      return parts.join(" · ");
-    }
-
     async function loadPage(page){
       if (isLoading) return;
       isLoading = true;
 
-      renderState('loading','Loading booking history...');
+      renderState('loading', `Loading page ${page}...`);
       el.list.innerHTML='';
 
       try{
-        const res = await fetch(`${API_BASE}/booking/history?page=${page-1}&page_size=${PAGE_SIZE}&sort=created_at&order=desc`, {
+        const res = await fetch(`${API_BASE}/booking/history?page=${page}&page_size=${PAGE_SIZE}&sort=created_at&order=desc`, {
           method:'GET', credentials:'include', headers:{'Accept':'application/json'}
         });
         if(!res.ok) throw new Error(`HTTP ${res.status}`);
 
         const payload = await res.json();
         const bookings = normalizeBookings(payload);
-        window._lastBookings = bookings; // เก็บไว้เป็น fallback
+        window._lastBookings = bookings;
 
         clearState();
         renderList(bookings);
 
-        const { hasNext, curPage } = extractPaginationMeta(payload, page, PAGE_SIZE, bookings.length);
-        currentPage = curPage || page;
-        renderPagination(currentPage, !!hasNext);
+        const { hasNext } = extractPaginationMeta(payload, page, PAGE_SIZE, bookings.length);
+        currentPage = page;
+        renderPagination(currentPage, hasNext);
 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: 'instant' });
       } catch(err) {
         console.error(err);
         renderState('error', `Failed to load: ${err.message}`);
@@ -204,9 +199,7 @@
         const home=m.HomeTeam?.ShortName||'-', away=m.AwayTeam?.ShortName||'-';
         const venue=m.Venue||m.HomeTeam?.Venue||'-';
         const status=b.status||'UNKNOWN', total=b.total_price;
-        const kickOff = m.UTCDate || ''; /* removed from UI */
 
-        // ดึงSeatแรกมาโชว์สรุป
         const tickets = b?.tickets ?? b?.Seats ?? b?.seats ?? b?.items ?? [];
         const firstSeat = Array.isArray(tickets) ? tickets[0] : null;
         const seatChip = firstSeat ? seatSummaryFromAny(firstSeat) : '';
@@ -228,13 +221,29 @@
 
       el.list.innerHTML = html;
 
-      // bind events
       el.list.querySelectorAll('.card').forEach(card=>{
         card.addEventListener('click', onCardActivate);
         card.addEventListener('keydown', e=>{
           if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onCardActivate.call(card, e); }
         });
       });
+    }
+
+    // --- seats helpers ---
+    function getSeatParts(obj = {}) {
+      const o = obj.Seat || obj.seat || obj;
+      const zone = o?.block ?? o?.Block ?? o?.zone ?? o?.Zone ?? o?.section ?? o?.section_name ?? o?.sectionName ?? o?.area ?? o?.stand ?? null;
+      const row  = o?.row ?? o?.Row ?? o?.line ?? o?.Line ?? o?.row_number ?? o?.rowNumber ?? o?.RowNumber ?? o?.tier ?? null;
+      const seat = o?.seat ?? o?.Seat ?? o?.number ?? o?.No ?? o?.no ?? o?.seat_no ?? o?.seatNo ?? o?.SeatNumber ?? o?.seat_number ?? o?.label ?? o?.seat_label ?? null;
+      return { zone, row, seat };
+    }
+    function seatSummaryFromAny(item) {
+      const { zone, row, seat } = getSeatParts(item || {});
+      const parts = [];
+      if (seat) parts.push(`Seat ${seat}`);
+      if (row) parts.push(`Row ${row}`);
+      if (zone) parts.push(`Zone ${zone}`);
+      return parts.join(" · ");
     }
 
     async function onCardActivate(e){
@@ -244,7 +253,6 @@
 
       openModal(loadingDetailSkeleton());
 
-      // 1) ใช้ API ถ้ามี id
       if (id) {
         try {
           const res = await fetch(`${API_BASE}/booking/${encodeURIComponent(id)}`, {
@@ -260,9 +268,8 @@
         }
       }
 
-      // 2) fallback แสดงจากรายการที่คลิก
       if (fallbackBooking) {
-        el.detail.innerHTML = renderDetailContent(fallbackBooking, /*isFallback*/true);
+        el.detail.innerHTML = renderDetailContent(fallbackBooking, true);
       } else {
         el.detail.innerHTML = `<div class="error">Unable to load details</div>`;
       }
@@ -281,19 +288,16 @@
     }
 
     function renderDetailContent(b, isFallback=false){
-      // เดาทุกรูปร่างข้อมูลที่พบบ่อย
       const id = getBookingId(b) || '—';
       const status = b?.status ?? 'UNKNOWN';
       const created = b?.created_at || b?.createdAt || b?.created || b?.ordered_at || null;
       const total = b?.total_price ?? b?.amount ?? b?.total ?? null;
 
-      // Seat / ตั๋ว
       const tickets = b?.tickets ?? b?.Seats ?? b?.seats ?? b?.items ?? [];
       const match = b?.Match ?? b?.match ?? {};
       const home = match?.HomeTeam?.ShortName ?? match?.home ?? '-';
       const away = match?.AwayTeam?.ShortName ?? match?.away ?? '-';
       const venue = match?.Venue ?? match?.HomeTeam?.Venue ?? b?.venue ?? '-';
-      const ko = match?.UTCDate ?? b?.kickoff ?? null; /* removed from UI */
 
       const customer = b?.customer ?? b?.User ?? b?.user ?? {};
       const name = customer?.name ?? customer?.full_name ?? customer?.FullName ?? '';
@@ -310,8 +314,8 @@
 
       const matchBlock = `
         <div class="kv" style="margin:10px 0 8px">
-          <div class="k">การแข่งขัน</div><div>${home} <span class="muted">vs</span> ${away}</div>
-          <div class="k">สนาม</div><div>${venue}</div>
+          <div class="k">Match</div><div>${home} <span class="muted">vs</span> ${away}</div>
+          <div class="k">Venue</div><div>${venue}</div>
         </div>
       `;
 
@@ -333,8 +337,8 @@
               const ref = t?.ticket_id ?? t?.id ?? t?.uuid ?? t?.reference ?? '';
               const line = [
                 seat ? `Seat ${seat}` : null,
-                row ? `<span class=\"muted\">Row<\/span> ${row}` : null,
-                zone ? `<span class=\"muted\">Zone<\/span> ${zone}` : null
+                row ? `<span class="muted">Row</span> ${row}` : null,
+                zone ? `<span class="muted">Zone</span> ${zone}` : null
               ].filter(Boolean).join(' ');
 
               return `
@@ -351,19 +355,10 @@
         ` : '';
 
       const fallbackNote = isFallback
-        ? `<div class="muted small" style="margin-top:10px">แสดงจากข้อมูลรายการเบื้องต้น (ไม่สามารถเรียกรายละเอียดจาก API ได้)</div>`
+        ? `<div class="muted small" style="margin-top:10px">Displayed using basic list data (could not fetch detailed info from API)</div>`
         : '';
 
       return metaBlock + matchBlock + customerBlock + ticketList + fallbackNote ;
-    }
-
-    function escapeHtml(str){
-      return String(str)
-        .replaceAll('&','&amp;')
-        .replaceAll('<','&lt;')
-        .replaceAll('>','&gt;')
-        .replaceAll('"','&quot;')
-        .replaceAll("'","&#039;");
     }
 
     // ===== Modal helpers =====
@@ -371,14 +366,10 @@
       el.detail.innerHTML = innerHtml || '';
       el.modal.classList.add('open');
       el.modal.removeAttribute('aria-hidden');
-      // โฟกัสปุ่มปิดเพื่อการเข้าถึง
       setTimeout(()=> el.closeBtn.focus(), 0);
-      // ปิดเมื่อกดพื้นหลัง
       el.modal.addEventListener('click', onBackdropClick);
-      // ปิดด้วยคีย์ Esc
       window.addEventListener('keydown', onEsc);
     }
-
     function closeModal(){
       el.modal.classList.remove('open');
       el.modal.setAttribute('aria-hidden','true');
@@ -386,16 +377,10 @@
       el.modal.removeEventListener('click', onBackdropClick);
       window.removeEventListener('keydown', onEsc);
     }
-
-    function onBackdropClick(e){
-      if (e.target === el.modal) closeModal();
-    }
-    function onEsc(e){
-      if (e.key === 'Escape') closeModal();
-    }
+    function onBackdropClick(e){ if (e.target === el.modal) closeModal(); }
+    function onEsc(e){ if (e.key === 'Escape') closeModal(); }
 
     el.closeBtn.addEventListener('click', closeModal);
-
     window.addEventListener('DOMContentLoaded', () => loadPage(1));
   </script>
 </body>

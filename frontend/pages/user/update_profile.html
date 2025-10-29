@@ -13,30 +13,73 @@
 
     <form id="form" novalidate>
       <div class="row">
-        <label>Username</label>
-        <input id="username" type="text" placeholder="e.g. john_doe" />
+        <label for="username">Username</label>
+        <input
+          id="username"
+          name="username"
+          type="text"
+          placeholder="Jamelnwza007"
+          autocomplete="username"
+          required
+          minlength="3"
+          pattern="[A-Za-z0-9]{3,20}"
+          title="Letters and numbers only (3-20 characters)"
+        />
       </div>
 
       <div class="grid2">
         <div class="row">
-          <label>First Name</label>
-          <input id="first_name" type="text" placeholder="e.g. John" />
+          <label for="first_name">First Name</label>
+          <input
+            id="first_name"
+            name="first_name"
+            type="text"
+            placeholder="John"
+            autocomplete="given-name"
+            pattern="[A-Za-z]{2,50}"
+            title="Letters only (2–50 characters)"
+          />
         </div>
         <div class="row">
-          <label>Last Name</label>
-          <input id="last_name" type="text" placeholder="e.g. Smith" />
+          <label for="last_name">Last Name</label>
+          <input
+            id="last_name"
+            name="last_name"
+            type="text"
+            placeholder="Doe"
+            autocomplete="family-name"
+            pattern="[A-Za-z]{2,50}"
+            title="Letters only (2–50 characters)"
+          />
         </div>
       </div>
 
       <div class="row">
-        <label>Email</label>
-        <input id="email" type="email" placeholder="example@domain.com" />
+        <label for="email">Email</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          placeholder="you1234@example.com"
+          autocomplete="email"
+          title="Enter a valid email address"
+        />
       </div>
 
       <div class="row">
-        <label>Phone Number</label>
-        <input id="phone_number" type="tel" placeholder="0812345678" />
-        <div class="hint">Enter only 9–10 digits</div>
+        <label for="phone_number">Phone Number</label>
+        <input
+          id="phone_number"
+          name="phone_number"
+          type="tel"
+          inputmode="numeric"
+          autocomplete="tel"
+          placeholder="0123456789"
+          pattern="[0-9]{9,15}"
+          title="Digits only (9-15 numbers)"
+          maxlength="15"
+        />
+        <div class="hint">Numbers only, 9–15 digits</div>
       </div>
 
       <div class="actions">
@@ -51,7 +94,6 @@
     const statusEl = document.getElementById('status');
     const formEl = document.getElementById('form');
     const cancelBtn = document.getElementById('cancelBtn');
-
     const $ = (id) => document.getElementById(id);
 
     function qs(name) {
@@ -65,16 +107,33 @@
     }
 
     function sanitizePhone(p) {
-      return (p || '').replace(/\D/g, '').slice(0, 10);
+      return (p || '').replace(/\D/g, '').slice(0, 15);
     }
 
     function validate(values) {
       const errs = [];
       if (!values.username.trim()) errs.push('Username is required');
-      if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) errs.push('Invalid email');
+
+      if (values.username && !/^[A-Za-z0-9]{3,20}$/.test(values.username)) {
+        errs.push('Username: letters and numbers only (3-20)');
+      }
+
+      if (values.first_name && !/^[A-Za-z]{2,50}$/.test(values.first_name)) {
+        errs.push('First name: letters only (2–50)');
+      }
+      if (values.last_name && !/^[A-Za-z]{2,50}$/.test(values.last_name)) {
+        errs.push('Last name: letters only (2–50)');
+      }
+
+      if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
+        errs.push('Invalid email');
+      }
+
       if (values.phone_number) {
         const phone = sanitizePhone(values.phone_number);
-        if (phone.length < 9 || phone.length > 10) errs.push('Phone number must be 9–10 digits');
+        if (!/^\d{9,15}$/.test(phone)) {
+          errs.push('Phone number must be digits only (9–15)');
+        }
       }
       return errs;
     }
@@ -104,7 +163,7 @@
         }
         const data = json?.data || json || {};
         fillForm(data);
-        setStatus('muted', ''); // ลบข้อความ "Edit information and click Save"
+        setStatus('muted', '');
       } catch (err) {
         setStatus('error', 'Failed to load profile', err.message);
       }
@@ -136,9 +195,18 @@
       }
       return { ok: false, error: 'Both PUT and POST failed' };
     }
+    $('phone_number').addEventListener('input', (e) => {
+      const cleaned = sanitizePhone(e.target.value);
+      if (e.target.value !== cleaned) e.target.value = cleaned;
+    });
 
     formEl.addEventListener('submit', async (e) => {
       e.preventDefault();
+
+      if (!formEl.reportValidity()) {
+        return;
+      }
+
       setStatus('muted', 'Saving...');
       const values = {
         username: $('username').value.trim(),
