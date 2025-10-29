@@ -10,10 +10,11 @@ body {
 
 .card {
     background: #ffffff;
-    padding: 32px 28px;
+    padding: 28px 22px;
     border-radius: 18px;
     box-shadow: 0 10px 36px rgba(0, 0, 0, 0.08);
-    width: 440px;
+    width: 100%;
+    max-width: 360px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -23,8 +24,8 @@ body {
 }
 
 h1 {
-    font-size: 24px;
-    margin: 0 0 22px;
+    font-size: 20px;
+    margin: 0 0 18px;
     text-align: center;
     color: #1e3a8a;
     letter-spacing: 0.3px;
@@ -32,7 +33,7 @@ h1 {
 
 .info {
     display: grid;
-    gap: 12px;
+    gap: 10px;
     margin-top: 12px;
 }
 
@@ -41,9 +42,9 @@ h1 {
     grid-template-columns: 1fr 2fr;
     gap: 10px;
     background: #f3f4f6;
-    padding: 12px 16px;
+    padding: 10px 14px;
     border-radius: 10px;
-    font-size: 14px;
+    font-size: 13px;
     align-items: center;
     transition: background 0.15s ease;
 }
@@ -78,7 +79,8 @@ h1 {
 
 .actions {
     display: flex;
-    gap: 10px;
+    flex-direction: column;
+    gap: 8px;
     margin-top: 20px;
 }
 
@@ -112,117 +114,34 @@ button.warn {
     background: #f59e0b;
     color: #111827;
 }
-body {
-    font-family: "Segoe UI", "Prompt", sans-serif;
-    background: linear-gradient(135deg, #eff6ff, #f8fafc);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    margin: 0;
+
+@media (min-width: 480px) {
+    .card {
+        max-width: 400px;
+        padding: 32px 26px;
+    }
+
+    h1 {
+        font-size: 22px;
+    }
+
+    .actions {
+        flex-direction: row;
+        gap: 10px;
+    }
 }
 
-.card {
-    background: #ffffff;
-    padding: 32px 28px;
-    border-radius: 18px;
-    box-shadow: 0 10px 36px rgba(0, 0, 0, 0.08);
-    width: 440px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
+@media (min-width: 768px) {
+    .card {
+        max-width: 440px;
+    }
 
-.card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.12);
-}
+    h1 {
+        font-size: 24px;
+    }
 
-h1 {
-    font-size: 24px;
-    margin: 0 0 22px;
-    text-align: center;
-    color: #1e3a8a;
-    letter-spacing: 0.3px;
-}
-
-.info {
-    display: grid;
-    gap: 12px;
-    margin-top: 12px;
-}
-
-.item {
-    display: grid;
-    grid-template-columns: 1fr 2fr;
-    gap: 10px;
-    background: #f3f4f6;
-    padding: 12px 16px;
-    border-radius: 10px;
-    font-size: 14px;
-    align-items: center;
-    transition: background 0.15s ease;
-}
-
-.item:hover {
-    background: #e5e7eb;
-}
-
-.item span:first-child {
-    font-weight: 600;
-    color: #374151;
-}
-
-.muted {
-    text-align: center;
-    color: #6b7280;
-    font-style: italic;
-    margin-top: 12px;
-}
-
-.error {
-    color: #dc2626;
-    text-align: left;
-    font-size: 13px;
-    white-space: pre-wrap;
-    background: #fff1f2;
-    border: 1px solid #fecdd3;
-    padding: 12px;
-    border-radius: 8px;
-    line-height: 1.5;
-}
-
-.actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-button {
-    flex: 1;
-    padding: 10px 12px;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 14px;
-    transition: filter 0.2s ease, transform 0.1s ease;
-}
-
-button:hover {
-    filter: brightness(0.95);
-    transform: translateY(-1px);
-}
-
-button.primary {
-    background: #2563eb;
-    color: #ffffff;
-}
-
-button.secondary {
-    background: #e5e7eb;
-    color: #111827;
-}
-
-button.warn {
-    background: #f59e0b;
-    color: #111827;
+    .item {
+        font-size: 14px;
+        padding: 12px 16px;
+    }
 }

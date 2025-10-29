@@ -25,24 +25,24 @@ main {
 
 .card {
   width: 100%;
-  max-width: 520px;
+  max-width: 460px;
   margin: 0 auto;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 12px;
-  padding: 20px;
+  padding: 18px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.4);
 }
 
 h1 {
-  font-size: 32px;
+  font-size: 28px;
   margin: 0 0 8px;
 }
 
 .sub {
   color: #d7d7d7;
   margin: 0 0 16px;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 form {
@@ -58,12 +58,8 @@ label {
 
 .row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 10px;
-}
-
-@media (max-width: 560px) {
-  .row { grid-template-columns: 1fr; }
 }
 
 .fld {
@@ -72,7 +68,6 @@ label {
 
 input {
   width: 100%;
-  appearance: none;
   border-radius: 8px;
   border: 1px solid rgba(255,255,255,0.35);
   background: rgba(255,255,255,0.9);
@@ -89,7 +84,7 @@ input::placeholder {
 input:focus {
   outline: none;
   border-color: #d00027;
-  box-shadow: 0 0 0 3px rgba(208, 0, 39, 0.25);
+  box-shadow: 0 0 0 3px rgba(208,0,39,0.25);
 }
 
 .dual {
@@ -115,7 +110,9 @@ input:focus {
   border-bottom-right-radius: 8px;
 }
 
-.toggle:hover { filter: brightness(0.96); }
+.toggle:hover {
+  filter: brightness(0.96);
+}
 
 .toolbar {
   display: flex;
@@ -127,7 +124,6 @@ input:focus {
 }
 
 .btn {
-  appearance: none;
   border: none;
   cursor: pointer;
   background: linear-gradient(#d00027, #b0001f);
@@ -140,11 +136,17 @@ input:focus {
   transition: transform .06s ease, filter .15s ease;
 }
 
-.btn:hover { filter: brightness(1.07); }
+.btn:hover {
+  filter: brightness(1.07);
+}
 
-.btn:active { transform: translateY(1px); }
+.btn:active {
+  transform: translateY(1px);
+}
 
-.btn[aria-busy="true"] { opacity: 0.8; }
+.btn[aria-busy="true"] {
+  opacity: 0.8;
+}
 
 .btn-ghost {
   color: #fff;
@@ -158,7 +160,9 @@ input:focus {
   gap: 8px;
 }
 
-.btn-ghost:hover { background: rgba(255,255,255,0.06); }
+.btn-ghost:hover {
+  background: rgba(255,255,255,0.06);
+}
 
 .console {
   margin-top: 12px;
@@ -170,15 +174,26 @@ input:focus {
   background: rgba(0,0,0,0.35);
 }
 
-.console .msg { font-weight: 700; margin-bottom: 6px; }
+.console .msg {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
 
-.console.ok { border-color: rgba(32,201,151,0.45); }
+.console.ok {
+  border-color: rgba(32,201,151,0.45);
+}
 
-.console.ok .msg { color: #20c997; }
+.console.ok .msg {
+  color: #20c997;
+}
 
-.console.error { border-color: rgba(255,71,87,0.5); }
+.console.error {
+  border-color: rgba(255,71,87,0.5);
+}
 
-.console .msg.err { color: #ff4757; }
+.console .msg.err {
+  color: #ff4757;
+}
 
 .foot {
   margin: 12px 0 0;
@@ -186,12 +201,23 @@ input:focus {
   font-size: 13px;
 }
 
-.foot .link { color: #ffd86b; }
+.foot .link {
+  color: #ffd86b;
+}
 
-.foot .link:hover { text-decoration: underline; }
+.foot .link:hover {
+  text-decoration: underline;
+}
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
+}
+
+@media (min-width: 600px) {
+  .row { grid-template-columns: 1fr 1fr; }
+  .card { max-width: 560px; padding: 24px; }
+  h1 { font-size: 36px; }
+  .sub { font-size: 14px; }
 }
 * {
   box-sizing: border-box;
@@ -220,24 +246,24 @@ main {
 
 .card {
   width: 100%;
-  max-width: 520px;
+  max-width: 460px;
   margin: 0 auto;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 12px;
-  padding: 20px;
+  padding: 18px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.4);
 }
 
 h1 {
-  font-size: 32px;
+  font-size: 28px;
   margin: 0 0 8px;
 }
 
 .sub {
   color: #d7d7d7;
   margin: 0 0 16px;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 form {
@@ -253,12 +279,8 @@ label {
 
 .row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 10px;
-}
-
-@media (max-width: 560px) {
-  .row { grid-template-columns: 1fr; }
 }
 
 .fld {
@@ -267,7 +289,6 @@ label {
 
 input {
   width: 100%;
-  appearance: none;
   border-radius: 8px;
   border: 1px solid rgba(255,255,255,0.35);
   background: rgba(255,255,255,0.9);
@@ -284,7 +305,7 @@ input::placeholder {
 input:focus {
   outline: none;
   border-color: #d00027;
-  box-shadow: 0 0 0 3px rgba(208, 0, 39, 0.25);
+  box-shadow: 0 0 0 3px rgba(208,0,39,0.25);
 }
 
 .dual {
@@ -310,7 +331,9 @@ input:focus {
   border-bottom-right-radius: 8px;
 }
 
-.toggle:hover { filter: brightness(0.96); }
+.toggle:hover {
+  filter: brightness(0.96);
+}
 
 .toolbar {
   display: flex;
@@ -322,7 +345,6 @@ input:focus {
 }
 
 .btn {
-  appearance: none;
   border: none;
   cursor: pointer;
   background: linear-gradient(#d00027, #b0001f);
@@ -335,14 +357,33 @@ input:focus {
   transition: transform .06s ease, filter .15s ease;
 }
 
-.btn:hover { filter: brightness(1.07); }
+.btn:hover {
+  filter: brightness(1.07);
+}
 
-.btn:active { transform: translateY(1px); }
+.btn:active {
+  transform: translateY(1px);
+}
 
-.btn[aria-busy="true"] { opacity: 0.8; }
+.btn[aria-busy="true"] {
+  opacity: 0.8;
+}
 
+.btn-ghost {
+  color: #fff;
+  background: transparent;
+  border: 1px dashed rgba(255,255,255,0.35);
+  padding: 8px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
 
-.btn-ghost:hover { background: rgba(255,255,255,0.06); }
+.btn-ghost:hover {
+  background: rgba(255,255,255,0.06);
+}
 
 .console {
   margin-top: 12px;
@@ -354,15 +395,26 @@ input:focus {
   background: rgba(0,0,0,0.35);
 }
 
-.console .msg { font-weight: 700; margin-bottom: 6px; }
+.console .msg {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
 
-.console.ok { border-color: rgba(32,201,151,0.45); }
+.console.ok {
+  border-color: rgba(32,201,151,0.45);
+}
 
-.console.ok .msg { color: #20c997; }
+.console.ok .msg {
+  color: #20c997;
+}
 
-.console.error { border-color: rgba(255,71,87,0.5); }
+.console.error {
+  border-color: rgba(255,71,87,0.5);
+}
 
-.console .msg.err { color: #ff4757; }
+.console .msg.err {
+  color: #ff4757;
+}
 
 .foot {
   margin: 12px 0 0;
@@ -370,10 +422,21 @@ input:focus {
   font-size: 13px;
 }
 
-.foot .link { color: #ffd86b; }
+.foot .link {
+  color: #ffd86b;
+}
 
-.foot .link:hover { text-decoration: underline; }
+.foot .link:hover {
+  text-decoration: underline;
+}
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
+}
+
+@media (min-width: 600px) {
+  .row { grid-template-columns: 1fr 1fr; }
+  .card { max-width: 560px; padding: 24px; }
+  h1 { font-size: 36px; }
+  .sub { font-size: 14px; }
 }
