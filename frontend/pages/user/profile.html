@@ -1,20 +1,22 @@
 <!doctype html>
-<html lang="th">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>User Profile</title>
   <link rel="stylesheet" href="../../style/profile.css" />
-
 </head>
 <body>
   <div class="card">
-    <h1>โปรไฟล์ผู้ใช้</h1>
-    <div id="content" class="muted">กำลังโหลดข้อมูล...</div>
+    <h1>User Profile</h1>
+    <div id="content" class="muted">Loading data...</div>
+
     <div class="actions">
-      <button id="editBtn" class="warn">แก้ไขข้อมูล</button>
-      <button id="reloadBtn">รีเฟรช</button>
-      <button id="logoutBtn" class="secondary">ออกจากระบบ</button>
+      <button id="editBtn" class="warn">Edit Profile</button>
+      <button id="reloadBtn">Refresh</button>
+      <button id="bookingBtn" class="info">View Booking History</button>
+      <button id="backBtn" class="secondary">Back</button>
+      <button id="logoutBtn" class="secondary">Logout</button>
     </div>
   </div>
 
@@ -23,13 +25,15 @@
     const reloadBtn = document.getElementById('reloadBtn');
     const logoutBtn = document.getElementById('logoutBtn');
     const editBtn = document.getElementById('editBtn');
+    const bookingBtn = document.getElementById('bookingBtn');
+    const backBtn = document.getElementById('backBtn');
 
     const API_BASE = 'https://stadiumhub.onrender.com/api/v1';
 
     function renderError(msg, extra) {
-      const detail = extra ? `\n\nรายละเอียด:\n${extra}` : '';
+      const detail = extra ? `\n\nDetails:\n${extra}` : '';
       contentEl.classList.remove('muted');
-      contentEl.innerHTML = `<div class="error">❌ โหลดไม่สำเร็จ: ${msg}${detail}</div>`;
+      contentEl.innerHTML = `<div class="error">❌ Failed to load: ${msg}${detail}</div>`;
     }
 
     function pickFields(raw) {
@@ -48,17 +52,17 @@
       contentEl.innerHTML = `
         <div class="info">
           <div class="item"><span>Username</span><span>${p.username}</span></div>
-          <div class="item"><span>ชื่อ</span><span>${p.first_name}</span></div>
-          <div class="item"><span>นามสกุล</span><span>${p.last_name}</span></div>
-          <div class="item"><span>อีเมล</span><span>${p.email}</span></div>
-          <div class="item"><span>เบอร์โทร</span><span>${p.phone_number}</span></div>
+          <div class="item"><span>First Name</span><span>${p.first_name}</span></div>
+          <div class="item"><span>Last Name</span><span>${p.last_name}</span></div>
+          <div class="item"><span>Email</span><span>${p.email}</span></div>
+          <div class="item"><span>Phone</span><span>${p.phone_number}</span></div>
         </div>
       `;
     }
 
     async function loadProfile() {
       contentEl.classList.add('muted');
-      contentEl.textContent = 'กำลังโหลดข้อมูล...';
+      contentEl.textContent = 'Loading data...';
       try {
         const res = await fetch(`${API_BASE}/user/profile`, {
           method: 'GET',
@@ -72,7 +76,7 @@
         try { json = rawText ? JSON.parse(rawText) : null; } catch {}
 
         if (!res.ok) {
-          renderError(`HTTP ${res.status}`, rawText || '(ว่าง)');
+          renderError(`HTTP ${res.status}`, rawText || '(Empty)');
           return;
         }
 
@@ -92,14 +96,15 @@
           credentials: 'include',
           headers: { 'Accept': 'application/json' }
         });
+
         if (res.ok) {
-          location.reload();
+          location.href = 'login.html'; // Redirect to login after logout
         } else {
           const text = await res.text();
-          alert(`ออกจากระบบไม่สำเร็จ: HTTP ${res.status} - ${text}`);
+          alert(`Logout failed: HTTP ${res.status} - ${text}`);
         }
       } catch (e) {
-        alert('ออกจากระบบไม่สำเร็จ: ' + e.message);
+        alert('Logout failed: ' + e.message);
       }
     }
 
@@ -108,35 +113,23 @@
       location.href = `update_profile.html?return=${returnUrl}`;
     }
 
+    // Go to booking history page
+    function goToBookingHistory() {
+      location.href = '../user/get_all_booking%20_history.html';
+    }
+
+    // Go back to match page
+    function goBack() {
+      location.href = '../match/match.html';
+    }
+
     reloadBtn.addEventListener('click', loadProfile);
     logoutBtn.addEventListener('click', logout);
     editBtn.addEventListener('click', goToUpdate);
+    bookingBtn.addEventListener('click', goToBookingHistory);
+    backBtn.addEventListener('click', goBack);
 
     loadProfile();
-
-    async function logout() {
-  try {
-    const res = await fetch(`${API_BASE}/user/logout`, {
-      method: 'POST',
-      mode: 'cors',
-      credentials: 'include',
-      headers: { 'Accept': 'application/json' }
-    });
-
-    if (res.ok) {
-      // ไปหน้า login.html หลังออกจากระบบสำเร็จ
-      location.href = 'login.html';
-    } else {
-      const text = await res.text();
-      alert(`ออกจากระบบไม่สำเร็จ: HTTP ${res.status} - ${text}`);
-    }
-  } catch (e) {
-    alert('ออกจากระบบไม่สำเร็จ: ' + e.message);
-  }
-}
-
-
   </script>
-
 </body>
 </html>

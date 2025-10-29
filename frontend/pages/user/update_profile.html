@@ -1,48 +1,47 @@
-<!doctype html>
-<html lang="th">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Update Profile</title>
-    <link rel="stylesheet" href="../../style/update_profile.css" />
-
+  <link rel="stylesheet" href="../../style/update_profile.css" />
 </head>
 <body>
   <div class="card">
-    <h1>แก้ไขข้อมูลผู้ใช้</h1>
-    <div id="status" class="muted">กำลังโหลดข้อมูล...</div>
+    <h1>Edit User Information</h1>
+    <div id="status" class="muted">Loading profile...</div>
 
     <form id="form" novalidate>
       <div class="row">
-        <label>Username (อ่านอย่างเดียว)</label>
-        <input id="username" name="username" type="text" readonly />
+        <label>Username</label>
+        <input id="username" type="text" placeholder="e.g. john_doe" />
       </div>
 
       <div class="grid2">
         <div class="row">
-          <label>ชื่อ</label>
-          <input id="first_name" name="first_name" type="text" placeholder="เช่น สมชาย" />
+          <label>First Name</label>
+          <input id="first_name" type="text" placeholder="e.g. John" />
         </div>
         <div class="row">
-          <label>นามสกุล</label>
-          <input id="last_name" name="last_name" type="text" placeholder="เช่น ใจดี" />
+          <label>Last Name</label>
+          <input id="last_name" type="text" placeholder="e.g. Smith" />
         </div>
       </div>
 
       <div class="row">
-        <label>อีเมล</label>
-        <input id="email" name="email" type="email" placeholder="example@domain.com" />
+        <label>Email</label>
+        <input id="email" type="email" placeholder="example@domain.com" />
       </div>
 
       <div class="row">
-        <label>เบอร์โทร</label>
-        <input id="phone_number" name="phone_number" type="tel" placeholder="0812345678" />
-        <div class="hint">กรอกเฉพาะตัวเลข 9–10 หลัก</div>
+        <label>Phone Number</label>
+        <input id="phone_number" type="tel" placeholder="0812345678" />
+        <div class="hint">Enter only 9–10 digits</div>
       </div>
 
       <div class="actions">
-        <button type="submit">บันทึก</button>
-        <button type="button" class="secondary" id="cancelBtn">ยกเลิก</button>
+        <button type="submit">Save</button>
+        <button type="button" class="secondary" id="cancelBtn">Cancel</button>
       </div>
     </form>
   </div>
@@ -56,134 +55,91 @@
     const $ = (id) => document.getElementById(id);
 
     function qs(name) {
-      const u = new URL(location.href);
+      const u = new URL(window.location.href);
       return u.searchParams.get(name);
     }
 
-    function setStatusOk(msg) {
-      statusEl.className = 'ok';
-      statusEl.textContent = msg;
-    }
-    function setStatusError(msg, extra) {
-      statusEl.className = 'error';
-      statusEl.textContent = extra ? `${msg}\n\nรายละเอียด:\n${extra}` : msg;
-    }
-    function setStatusMuted(msg) {
-      statusEl.className = 'muted';
-      statusEl.textContent = msg;
+    function setStatus(type, msg, extra) {
+      statusEl.className = type;
+      statusEl.textContent = extra ? `${msg}\n${extra}` : msg;
     }
 
     function sanitizePhone(p) {
-      return (p || '').replace(/[^\d]/g, '').slice(0, 10);
+      return (p || '').replace(/\D/g, '').slice(0, 10);
     }
 
-    function validateForm(values) {
+    function validate(values) {
       const errs = [];
-      if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
-        errs.push('อีเมลไม่ถูกต้อง');
-      }
+      if (!values.username.trim()) errs.push('Username is required');
+      if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) errs.push('Invalid email');
       if (values.phone_number) {
         const phone = sanitizePhone(values.phone_number);
-        if (phone.length < 9 || phone.length > 10) {
-          errs.push('เบอร์โทรควรมี 9–10 หลัก');
-        }
+        if (phone.length < 9 || phone.length > 10) errs.push('Phone number must be 9–10 digits');
       }
       return errs;
     }
 
     function fillForm(data) {
-      $('username').value = data.username ?? '';
-      $('first_name').value = data.first_name ?? '';
-      $('last_name').value = data.last_name ?? '';
-      $('email').value = data.email ?? '';
-      $('phone_number').value = data.phone_number ?? '';
-    }
-
-    function pickFields(raw) {
-      const src = raw?.data && typeof raw.data === 'object' ? raw.data : raw || {};
-      return {
-        username: src.username ?? '',
-        first_name: src.first_name ?? '',
-        last_name: src.last_name ?? '',
-        email: src.email ?? '',
-        phone_number: src.phone_number ?? ''
-      };
+      $('username').value = data.username || '';
+      $('first_name').value = data.first_name || '';
+      $('last_name').value = data.last_name || '';
+      $('email').value = data.email || '';
+      $('phone_number').value = data.phone_number || '';
     }
 
     async function preload() {
-      setStatusMuted('กำลังโหลดข้อมูล...');
+      setStatus('muted', 'Loading profile...');
       try {
         const res = await fetch(`${API_BASE}/user/profile`, {
           method: 'GET',
-          mode: 'cors',
           credentials: 'include',
           headers: { 'Accept': 'application/json' }
         });
         const text = await res.text();
         let json = null;
         try { json = text ? JSON.parse(text) : null; } catch {}
-
         if (!res.ok) {
-          setStatusError(`โหลดโปรไฟล์ไม่สำเร็จ (HTTP ${res.status})`, text || '(ว่าง)');
+          setStatus('error', `Failed to load profile (${res.status})`, text);
           return;
         }
-        const data = pickFields(json || {});
+        const data = json?.data || json || {};
         fillForm(data);
-        setStatusMuted('แก้ไขข้อมูล แล้วกดบันทึก');
-      } catch (e) {
-        setStatusError('โหลดโปรไฟล์ไม่สำเร็จ', e.message);
+        setStatus('muted', ''); // ลบข้อความ "Edit information and click Save"
+      } catch (err) {
+        setStatus('error', 'Failed to load profile', err.message);
       }
     }
 
-    async function submitUpdate(payload) {
-      // ยิงด้วย PUT ก่อน ถ้าไม่รองรับ ค่อย fallback เป็น POST
-      const endpoints = [
-        { method: 'PUT', url: `${API_BASE}/user/update` },
-        { method: 'POST', url: `${API_BASE}/user/update` }
-      ];
-
-      for (const { method, url } of endpoints) {
+    async function updateUser(values) {
+      const methods = ['PUT', 'POST'];
+      for (let method of methods) {
         try {
-          const res = await fetch(url, {
+          const res = await fetch(`${API_BASE}/user/update`, {
             method,
-            mode: 'cors',
             credentials: 'include',
             headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(values)
           });
-
           const text = await res.text();
           let json = null;
           try { json = text ? JSON.parse(text) : null; } catch {}
-
-          if (res.ok) {
-            return { ok: true, data: json ?? text ?? null, methodUsed: method };
-          }
-
-          // ถ้าเป็น 405/404 ให้ลองวิธีถัดไป
-          if ([405, 404].includes(res.status)) {
-            continue;
-          }
-
-          // ข้อผิดพลาดอื่น ๆ ส่งกลับทันที
-          return { ok: false, error: `HTTP ${res.status}`, detail: text || '(ว่าง)' };
+          if (res.ok) return { ok: true, data: json || text, method };
+          if ([404, 405].includes(res.status)) continue;
+          return { ok: false, error: `HTTP ${res.status}`, detail: text };
         } catch (e) {
-          // ลองวิธีถัดไป
           if (method === 'PUT') continue;
           return { ok: false, error: e.message };
         }
       }
-
-      return { ok: false, error: 'ไม่สามารถเรียกใช้งาน /user/update ได้ทั้ง PUT และ POST' };
+      return { ok: false, error: 'Both PUT and POST failed' };
     }
 
     formEl.addEventListener('submit', async (e) => {
       e.preventDefault();
-      setStatusMuted('กำลังบันทึก...');
-
+      setStatus('muted', 'Saving...');
       const values = {
         username: $('username').value.trim(),
         first_name: $('first_name').value.trim(),
@@ -192,32 +148,28 @@
         phone_number: sanitizePhone($('phone_number').value)
       };
 
-      const errs = validateForm(values);
+      const errs = validate(values);
       if (errs.length) {
-        setStatusError('กรอกข้อมูลไม่ถูกต้อง:\n- ' + errs.join('\n- '));
+        setStatus('error', 'Invalid input:\n' + errs.join('\n'));
         return;
       }
 
-      const result = await submitUpdate(values);
+      const result = await updateUser(values);
       if (result.ok) {
-        setStatusOk('บันทึกสำเร็จ 🎉');
-        // กลับไปหน้าที่มา ถ้าไม่มีให้ไป profile.html
+        setStatus('ok', 'Saved successfully');
         const ret = qs('return');
         setTimeout(() => {
-          if (ret) {
-            location.href = ret;
-          } else {
-            location.href = 'profile.html';
-          }
-        }, 600);
+          location.href = ret || 'profile.html';
+        }, 700);
       } else {
-        setStatusError('บันทึกไม่สำเร็จ: ' + (result.error || 'ไม่ทราบสาเหตุ'), result.detail);
+        setStatus('error', 'Save failed: ' + (result.error || 'Unknown'), result.detail);
       }
     });
 
     cancelBtn.addEventListener('click', () => {
       const ret = qs('return');
-      if (ret) location.href = ret; else history.back();
+      if (ret) window.location.href = ret;
+      else history.back();
     });
 
     preload();

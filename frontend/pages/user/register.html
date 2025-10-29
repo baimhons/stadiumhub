@@ -1,18 +1,17 @@
 <!doctype html>
-<html lang="th">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>สมัครสมาชิก - จองสนามฟุตบอล</title>
+  <title>Sign up – Football Field Booking</title>
   <link rel="stylesheet" href="../../style/register.css" />
 </head>
 <body>
   <div class="card" role="region" aria-labelledby="title">
-    <h1 id="title">สมัครสมาชิก</h1>
-
+    <h1 id="title">Create your account</h1>
 
     <form id="registerForm" novalidate>
-      <label for="regUsername">ชื่อผู้ใช้ (username)
+      <label for="regUsername">Username
         <div class="fld">
           <input type="text" id="regUsername" name="username" minlength="3" required
                  autocomplete="username" placeholder="football123" />
@@ -20,68 +19,68 @@
       </label>
 
       <div class="row">
-        <label for="regFirstName">ชื่อจริง (first_name)
+        <label for="regFirstName">First name
           <div class="fld">
             <input type="text" id="regFirstName" name="first_name" required
-                   autocomplete="given-name" placeholder="สมชาย" />
+                   autocomplete="given-name" placeholder="Somchai" />
           </div>
         </label>
 
-        <label for="regLastName">นามสกุล (last_name)
+        <label for="regLastName">Last name
           <div class="fld">
             <input type="text" id="regLastName" name="last_name" required
-                   autocomplete="family-name" placeholder="ใจดี" />
+                   autocomplete="family-name" placeholder="Jaidee" />
           </div>
         </label>
       </div>
 
-      <label for="regEmail">อีเมล (email)
+      <label for="regEmail">Email
         <div class="fld">
           <input type="email" id="regEmail" name="email" required
                  autocomplete="email" placeholder="you@example.com" />
         </div>
       </label>
 
-      <label for="regPhone">เบอร์โทร (phone_number)
+      <label for="regPhone">Phone number
         <div class="fld">
           <input type="tel" id="regPhone" name="phone_number" required
                  pattern="[0-9]{9,15}" inputmode="numeric" autocomplete="tel"
                  placeholder="0123456789" />
-          <small class="muted">กรอกเฉพาะตัวเลข 9–15 หลัก</small>
+          <small class="muted">Numbers only, 9–15 digits</small>
         </div>
       </label>
 
       <div class="row">
-        <label for="regPassword">รหัสผ่าน (password)
+        <label for="regPassword">Password
           <div class="fld dual">
             <input type="password" id="regPassword" name="password" minlength="6" required
-                   autocomplete="new-password" placeholder="อย่างน้อย 6 ตัว" />
-            <button class="toggle" type="button" data-toggle="regPassword" aria-controls="regPassword" aria-pressed="false">แสดง</button>
+                   autocomplete="new-password" placeholder="at least 6 characters" />
+            <button class="toggle" type="button" data-toggle="regPassword" aria-controls="regPassword" aria-pressed="false">Show</button>
           </div>
         </label>
 
-        <label for="regConfirm">ยืนยันรหัสผ่าน (confirm_password)
+        <label for="regConfirm">Confirm password
           <div class="fld dual">
             <input type="password" id="regConfirm" name="confirm_password" minlength="6" required
-                   autocomplete="new-password" placeholder="พิมพ์รหัสอีกครั้ง" />
-            <button class="toggle" type="button" data-toggle="regConfirm" aria-controls="regConfirm" aria-pressed="false">แสดง</button>
+                   autocomplete="new-password" placeholder="type it again" />
+            <button class="toggle" type="button" data-toggle="regConfirm" aria-controls="regConfirm" aria-pressed="false">Show</button>
           </div>
         </label>
       </div>
 
       <div class="toolbar">
-        <button class="btn" id="registerBtn" type="submit">สมัครสมาชิก</button>
+        <button class="btn" id="registerBtn" type="submit">Sign up</button>
         <div>
-          <a class="btn-ghost" href="login.html">เข้าสู่ระบบ</a>
+          <a class="btn-ghost" href="login.html">Log in</a>
         </div>
       </div>
-    </form> 
+    </form>
 
     <pre id="console" class="console" aria-live="polite"></pre>
 
     <p class="foot">
-      มีบัญชีแล้ว? <a class="link" href="login.html">เข้าสู่ระบบ</a> ·
-      <a class="link" href="../index.html">หน้าแรก</a>
+      Already have an account? <a class="link" href="login.html">Log in</a> ·
+      <a class="link" href="../index.html">Home</a>
     </p>
   </div>
 
@@ -104,7 +103,7 @@
     };
 
     function logOK(msg, data){
-      if(!consoleBox) return; // กันเผื่อ
+      if(!consoleBox) return; // just in case
       consoleBox.innerHTML =
         `<div class="msg ok">${msg}</div>` +
         (data ? `\n${escapeHtml(JSON.stringify(data, null, 2))}` : '');
@@ -121,10 +120,10 @@
     }
     function escapeHtml(s){
       return String(s).replace(/[&<>"']/g, m =>
-        ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+        ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]));
     }
 
-    // ปุ่มโชว์/ซ่อนรหัสผ่าน + aria-pressed
+    // Show/hide password buttons + aria-pressed
     document.querySelectorAll('.toggle').forEach(tg=>{
       tg.addEventListener('click', ()=>{
         const id = tg.dataset.toggle;
@@ -132,18 +131,18 @@
         const type = inp.getAttribute('type') === 'password' ? 'text' : 'password';
         inp.setAttribute('type', type);
         const show = (type !== 'password');
-        tg.textContent = show ? 'ซ่อน' : 'แสดง';
+        tg.textContent = show ? 'Hide' : 'Show';
         tg.setAttribute('aria-pressed', String(show));
         inp.focus();
       });
     });
 
-    // เตือนทันทีถ้ารหัสผ่านไม่ตรง
+    // instant warning if passwords don't match
     fields.confirm_password.addEventListener('input', syncPwdValidity);
     fields.password.addEventListener('input', syncPwdValidity);
     function syncPwdValidity(){
       const same = fields.password.value === fields.confirm_password.value;
-      fields.confirm_password.setCustomValidity(same ? '' : 'รหัสผ่านไม่ตรงกัน');
+      fields.confirm_password.setCustomValidity(same ? '' : "Passwords don't match");
     }
 
     form.addEventListener('submit', async (e)=>{
@@ -159,7 +158,7 @@
       });
 
       if(fields.password.value !== fields.confirm_password.value){
-        logErr('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน');
+        logErr("Password and confirm password are different");
         fields.confirm_password.focus();
         return;
       }
@@ -176,14 +175,14 @@
 
       for (const [k,v] of Object.entries(payload)){
         if(v === '' || v == null){
-          logErr(`ข้อมูล "${k}" ห้ามเว้นว่าง`);
+          logErr(`Field "${k}" cannot be empty`);
           return;
         }
       }
 
       btn.disabled = true;
       btn.setAttribute('aria-busy','true');
-      logOK('กำลังสมัครสมาชิก...');
+      logOK('Signing you up...');
 
       try{
         const resp = await fetch(`${BASE_URL}/user/register`, {
@@ -197,18 +196,18 @@
         try{ data = JSON.parse(txt); } catch{ data = { raw: txt }; }
 
         if(resp.ok){
-          logOK('สมัครสมาชิกสำเร็จ!', data);
-          alert('สมัครสมาชิกสำเร็จ! กำลังไปหน้าเข้าสู่ระบบ...');
+          logOK('Sign up successful!');
+          alert("You're all set! Redirecting to the login page...");
           location.href = 'login.html';
           return;
         }
 
         const msg = (data && (data.message || data.error || data.detail)) ||
-                    `สมัครไม่สำเร็จ (HTTP ${resp.status})`;
+                    `Sign up failed (HTTP ${resp.status})`;
         logErr(msg, data);
 
       }catch(err){
-        logErr('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + err.message);
+        logErr('Network error: ' + err.message);
       }finally{
         btn.disabled = false;
         btn.removeAttribute('aria-busy');
