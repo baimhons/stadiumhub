@@ -64,7 +64,7 @@
             <div class="fld dual">
               <input type="password" id="regPassword" name="password" minlength="8" required
                      autocomplete="new-password" placeholder="at least 8 characters"
-                     pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$"
+                     pattern=".{8,}"
                      title="At least 8 characters" />
               <button class="toggle" type="button" data-toggle="regPassword" aria-controls="regPassword" aria-pressed="false" title="Show/Hide password">Show</button>
             </div>
@@ -74,7 +74,7 @@
             <div class="fld dual">
               <input type="password" id="regConfirm" name="confirm_password" minlength="8" required
                      autocomplete="new-password" placeholder="type it again"
-                     pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$"
+                     pattern=".{8,}"
                      title="At least 8 characters" />
               <button class="toggle" type="button" data-toggle="regConfirm" aria-controls="regConfirm" aria-pressed="false" title="Show/Hide password">Show</button>
             </div>
