@@ -62,20 +62,20 @@
         <div class="row">
           <label for="regPassword">Password
             <div class="fld dual">
-              <input type="password" id="regPassword" name="password" minlength="6" required
-                     autocomplete="new-password" placeholder="at least 6 characters"
-                     pattern=".{6,}"
-                     title="At least 6 characters" />
+              <input type="password" id="regPassword" name="password" minlength="8" required
+                     autocomplete="new-password" placeholder="at least 8 characters"
+                     pattern="^[A-Za-z][0-9].{8,}$"
+                     title="At least 8 characters" />
               <button class="toggle" type="button" data-toggle="regPassword" aria-controls="regPassword" aria-pressed="false" title="Show/Hide password">Show</button>
             </div>
           </label>
 
           <label for="regConfirm">Confirm password
             <div class="fld dual">
-              <input type="password" id="regConfirm" name="confirm_password" minlength="6" required
+              <input type="password" id="regConfirm" name="confirm_password" minlength="8" required
                      autocomplete="new-password" placeholder="type it again"
-                     pattern=".{6,}"
-                     title="At least 6 characters" />
+                     pattern="^[A-Za-z][0-9].{8,}$"
+                     title="At least 8 characters" />
               <button class="toggle" type="button" data-toggle="regConfirm" aria-controls="regConfirm" aria-pressed="false" title="Show/Hide password">Show</button>
             </div>
           </label>
